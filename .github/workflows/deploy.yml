@@ -78,26 +78,27 @@ jobs:
             ${PORT:+-p "$PORT"} \
             "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" "echo Connection successful"
 
-      - name: Deploy to server
-        shell: bash
-        run: |
-          PORT="${{ secrets.SSH_PORT }}"
-          IMAGE="${{ steps.img.outputs.image }}"
-          ssh -i ~/.ssh/deploy_key \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            ${PORT:+-p "$PORT"} \
-            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" "
-              set -e
-              docker pull ${IMAGE}:latest
-              docker stop music-sharing-app || true
-              docker rm music-sharing-app || true
-              docker run -d \
-                --name music-sharing-app \
-                -p 4526:8353 \
-                -e API_URL='${{ secrets.API_URL }}' \
-                --restart unless-stopped \
-                ${IMAGE}:latest
-              sleep 5
-              docker logs --tail=200 music-sharing-app || true
-            "
+            - name: Deploy to server
+              shell: bash
+              run: |
+                PORT="${{ secrets.SSH_PORT }}"
+                IMAGE="${{ steps.img.outputs.image }}"
+                ssh -i ~/.ssh/deploy_key \
+                  -o IdentitiesOnly=yes \
+                  -o StrictHostKeyChecking=yes \
+                  ${PORT:+-p "$PORT"} \
+                  "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" "
+                    set -e
+                    docker pull ${IMAGE}:latest
+                    docker stop music-sharing-app || true
+                    docker rm music-sharing-app || true
+                    docker run -d \
+                      --name music-sharing-app \
+                      -p 4526:8353 \
+                      -e PORT=8353 \
+                      -e API_URL='${{ secrets.API_URL }}' \
+                      --restart unless-stopped \
+                      ${IMAGE}:latest
+                    sleep 5
+                    docker logs --tail=200 music-sharing-app || true
+                  "
