@@ -1,4 +1,4 @@
-name: Build and Deploy Docker Image
+﻿name: Build and Deploy Docker Image
 
 on:
   push:
@@ -101,3 +101,21 @@ jobs:
               sleep 5
               docker logs --tail=200 music-sharing-app || true
             "
+
+  notify-discord:
+    needs: deploy-to-server
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Discord (success)
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\": \"✅ Deployment succeeded on master!\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Discord (failure)
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+               -d "{\"content\": \"❌ Deployment failed on master!\"}" \
+               ${{ secrets.DISCORD_WEBHOOK_URL }}
