@@ -7,43 +7,69 @@ import { User, Activity, Song, Follower, UserUpdate } from '../models/models';
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'http://192.168.1.217:5000/api/user';
+  private userApiUrl = 'http://192.168.1.217:5000/api/user';
+  private followerApiUrl = 'http://192.168.1.217:5000/api/follower';
+  private musicApiUrl = 'http://192.168.1.217:5000/api/music';
 
   constructor(private http: HttpClient) { }
 
   getUserById(id: number): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/${id}`);
+    return this.http.get<User>(`${this.userApiUrl}/${id}`);
   }
 
   updateUser(id: number, userData: UserUpdate): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/${id}`, userData);
+    return this.http.put<User>(`${this.userApiUrl}/${id}`, userData);
   }
 
+  // Update to use the music controller endpoint
   getUserSongs(userId: number): Observable<Song[]> {
-    return this.http.get<Song[]>(`${this.apiUrl}/${userId}/songs`);
+    return this.http.get<Song[]>(`${this.musicApiUrl}/user/${userId}/songs`);
   }
 
   getUserActivity(userId: number): Observable<Activity[]> {
-    return this.http.get<Activity[]>(`${this.apiUrl}/${userId}/analytics`);
+    return this.http.get<Activity[]>(`${this.userApiUrl}/${userId}/analytics`);
   }
 
   getUserFollowers(userId: number): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/${userId}/followers`);
+    return this.http.get<User[]>(`${this.followerApiUrl}/${userId}/followers`);
   }
 
   getUserFollowing(userId: number): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/${userId}/following`);
+    return this.http.get<User[]>(`${this.followerApiUrl}/${userId}/following`);
   }
 
   followUser(followedUserId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/follow`, { followedUserId });
+    const currentUserId = this.getCurrentUserId();
+    return this.http.post(`${this.followerApiUrl}/follow`, null, {
+      params: {
+        followerId: currentUserId.toString(),
+        followedId: followedUserId.toString()
+      }
+    });
   }
 
   unfollowUser(followedUserId: number): Observable<any> {
-    return this.http.post(`${this.apiUrl}/unfollow`, { followedUserId });
+    const currentUserId = this.getCurrentUserId();
+    return this.http.post(`${this.followerApiUrl}/unfollow`, null, {
+      params: {
+        followerId: currentUserId.toString(),
+        followedId: followedUserId.toString()
+      }
+    });
   }
 
   isFollowing(followedUserId: number): Observable<boolean> {
-    return this.http.get<boolean>(`${this.apiUrl}/isFollowing/${followedUserId}`);
+    const currentUserId = this.getCurrentUserId();
+    return this.http.get<boolean>(`${this.followerApiUrl}/isFollowing`, {
+      params: {
+        followerId: currentUserId.toString(),
+        followedId: followedUserId.toString()
+      }
+    });
+  }
+
+  private getCurrentUserId(): number {
+    const userId = localStorage.getItem('userId');
+    return userId ? parseInt(userId) : 0;
   }
 }

@@ -16,6 +16,7 @@ import { RouterModule } from '@angular/router';
 export class HeaderComponent {
   isDarkMode$: Observable<boolean>;
   currentUser$: Observable<User | null>;
+  isDropdownOpen = false; // Add this property
 
   constructor(
     private themeService: ThemeService,
@@ -29,7 +30,16 @@ export class HeaderComponent {
     this.themeService.toggleTheme();
   }
 
+  toggleDropdown(): void {
+    this.isDropdownOpen = !this.isDropdownOpen;
+  }
+
+  closeDropdown(): void {
+    this.isDropdownOpen = false;
+  }
+
   logout(): void {
+    this.isDropdownOpen = false;
     this.authService.logout();
   }
 }

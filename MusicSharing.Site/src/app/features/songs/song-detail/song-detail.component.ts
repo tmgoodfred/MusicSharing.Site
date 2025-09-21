@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { SongService } from '../../../core/services/song.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PlayerService } from '../../../core/services/player.service';
@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './song-detail.component.html',
   styleUrls: ['./song-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class SongDetailComponent implements OnInit {
   song: Song | null = null;

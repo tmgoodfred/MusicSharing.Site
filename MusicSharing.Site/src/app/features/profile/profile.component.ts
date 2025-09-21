@@ -5,7 +5,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PlayerService } from '../../core/services/player.service';
-import { User, Song, Activity, UserRole } from '../../core/models/models';
+import { User, Song, Activity, UserRole, Rating } from '../../core/models/models';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -79,6 +79,16 @@ export class ProfileComponent implements OnInit {
         console.error('Error loading profile:', err);
       }
     });
+  }
+
+  calculateAverageRating(ratings: Rating[] | undefined): string {
+    if (!ratings || ratings.length === 0) {
+      return 'No ratings';
+    }
+
+    const sum = ratings.reduce((acc, rating) => acc + rating.ratingValue, 0);
+    const average = sum / ratings.length;
+    return average.toFixed(1);
   }
 
   loadUserData(userId: number) {

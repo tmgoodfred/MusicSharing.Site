@@ -4,13 +4,14 @@ import { AuthService } from '../../../core/services/auth.service';
 import { BlogPost, User, UserRole } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-blog-list',
   templateUrl: './blog-list.component.html',
   styleUrls: ['./blog-list.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class BlogListComponent implements OnInit {
   blogPosts: BlogPost[] = [];

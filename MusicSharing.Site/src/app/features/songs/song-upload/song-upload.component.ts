@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { SongService } from '../../../core/services/song.service';
+import { TokenStorageService } from '../../../core/services/token-storage.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,7 +10,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './song-upload.component.html',
   styleUrls: ['./song-upload.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class SongUploadComponent {
   uploadForm: FormGroup;
@@ -23,7 +24,8 @@ export class SongUploadComponent {
   constructor(
     private fb: FormBuilder,
     private songService: SongService,
-    private router: Router
+    private router: Router,
+    private tokenStorage: TokenStorageService
   ) {
     this.uploadForm = this.fb.group({
       title: ['', Validators.required],
@@ -82,6 +84,10 @@ export class SongUploadComponent {
       });
     }
 
+    // Get the current user ID and add it to the form data
+    const userId = this.getCurrentUserId();
+    formData.append('userId', userId.toString());
+
     this.songService.uploadSong(formData).subscribe({
       next: (song) => {
         this.router.navigate(['/songs', song.id]);
@@ -91,5 +97,16 @@ export class SongUploadComponent {
         this.errorMessage = error?.error?.error || 'Upload failed. Please try again.';
       }
     });
+  }
+
+  private getCurrentUserId(): number {
+    const userId = this.tokenStorage.getUserId();
+    if (!userId) {
+      // Handle the case where there's no user ID
+      this.errorMessage = 'You must be logged in to upload songs.';
+      this.isSubmitting = false;
+      throw new Error('No user ID found');
+    }
+    return parseInt(userId);
   }
 }

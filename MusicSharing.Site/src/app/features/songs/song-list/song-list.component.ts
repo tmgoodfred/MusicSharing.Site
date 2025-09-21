@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Song } from '../../../core/models/models';
+import { Song, Rating } from '../../../core/models/models';
 import { SongService } from '../../../core/services/song.service';
 import { PlayerService } from '../../../core/services/player.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -28,6 +28,16 @@ export class SongListComponent implements OnInit {
   ngOnInit(): void {
     this.loadSongs();
     this.isLoggedIn = this.authService.isLoggedIn();
+  }
+
+  calculateAverageRating(ratings: Rating[] | undefined): string {
+    if (!ratings || ratings.length === 0) {
+      return 'No ratings';
+    }
+
+    const sum = ratings.reduce((acc, rating) => acc + rating.ratingValue, 0);
+    const average = sum / ratings.length;
+    return average.toFixed(1);
   }
 
   loadSongs(): void {

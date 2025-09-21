@@ -1,20 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PlaylistService } from '../../../core/services/playlists.service';
 import { SongService } from '../../../core/services/song.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
-import { Playlist, Song, User } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
+import { Playlist, Song, User } from '../../../core/models/models';
+import { AuthService } from '../../../core/services/auth.service';
+import { forkJoin, catchError, of, switchMap } from 'rxjs';
 
 @Component({
-  selector: 'app-playlist-create-edit',
+  selector: 'app-playlists-create-edit',
   templateUrl: './playlists-create-edit.component.html',
   styleUrls: ['./playlists-create-edit.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule]
 })
 export class PlaylistsCreateEditComponent implements OnInit {
   playlistForm: FormGroup;

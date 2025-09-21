@@ -1,16 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BlogService } from '../../../core/services/blog.service';
-import { BlogPost } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-blog-create-edit',
   templateUrl: './blog-create-edit.component.html',
-  styleUrls: ['./blog-create-edit.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class BlogCreateEditComponent implements OnInit {
   blogForm: FormGroup;
@@ -49,8 +47,8 @@ export class BlogCreateEditComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.error = 'Failed to load blog post for editing.';
-        console.error('Error loading blog post:', err);
+        this.error = 'Failed to load blog post data';
+        console.error(err);
       }
     });
   }
@@ -63,26 +61,30 @@ export class BlogCreateEditComponent implements OnInit {
     this.isSubmitting = true;
     this.error = '';
 
-    const blogPostData: Partial<BlogPost> = {
-      title: this.blogForm.value.title,
-      content: this.blogForm.value.content
-    };
+    const blogData = this.blogForm.value;
 
-    const request = this.isEditMode && this.postId
-      ? this.blogService.updatePost(this.postId, blogPostData)
-      : this.blogService.createPost(blogPostData);
-
-    request.subscribe({
-      next: (post) => {
-        this.router.navigate(['/blog', post.id]);
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.error = this.isEditMode
-          ? 'Failed to update blog post. Please try again.'
-          : 'Failed to create blog post. Please try again.';
-        console.error('Error submitting blog post:', err);
-      }
-    });
+    if (this.isEditMode && this.postId) {
+      this.blogService.updatePost(this.postId, blogData).subscribe({
+        next: () => {
+          this.router.navigate(['/blog', this.postId]);
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.error = 'Failed to update blog post';
+          console.error(err);
+        }
+      });
+    } else {
+      this.blogService.createPost(blogData).subscribe({
+        next: (post) => {
+          this.router.navigate(['/blog', post.id]);
+        },
+        error: (err) => {
+          this.isSubmitting = false;
+          this.error = 'Failed to create blog post';
+          console.error(err);
+        }
+      });
+    }
   }
 }

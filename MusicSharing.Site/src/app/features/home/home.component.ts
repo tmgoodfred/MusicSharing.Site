@@ -20,6 +20,11 @@ export class HomeComponent implements OnInit {
     this.loadDummyActivities();
   }
 
+  // Helper method for safe access to username's first character
+  getUserInitial(username: string | undefined): string {
+    return username ? username.charAt(0) : '?';
+  }
+
   formatActivityType(activity: Activity): string {
     switch (activity.type) {
       case 'Upload':

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './profile-edit.component.html',
   styleUrls: ['./profile-edit.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class ProfileEditComponent implements OnInit {
   profileForm: FormGroup;

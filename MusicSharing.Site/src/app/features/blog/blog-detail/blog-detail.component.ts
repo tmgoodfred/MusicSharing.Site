@@ -4,13 +4,14 @@ import { BlogService } from '../../../core/services/blog.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { BlogPost, User, UserRole } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-blog-detail',
   templateUrl: './blog-detail.component.html',
   styleUrls: ['./blog-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, RouterModule]
 })
 export class BlogDetailComponent implements OnInit {
   blogPost: BlogPost | null = null;

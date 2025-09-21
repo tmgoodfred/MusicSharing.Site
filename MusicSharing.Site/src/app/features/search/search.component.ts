@@ -1,25 +1,29 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { SongService } from '../../core/services/song.service';
 import { PlayerService } from '../../core/services/player.service';
-import { Song } from '../../core/models/models';
 import { CommonModule } from '@angular/common';
+import { Song, Rating } from '../../core/models/models';
 
 @Component({
   selector: 'app-search',
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule]
 })
 export class SearchComponent implements OnInit {
   searchForm: FormGroup;
   results: Song[] = [];
   isLoading = false;
+  selectedSort = 'relevance';
   error = '';
+
+  // Add the sortOptions array
   sortOptions = [
+    { value: 'relevance', label: 'Relevance' },
     { value: 'title', label: 'Title (A-Z)' },
     { value: 'titleDesc', label: 'Title (Z-A)' },
     { value: 'artist', label: 'Artist (A-Z)' },
@@ -29,7 +33,6 @@ export class SearchComponent implements OnInit {
     { value: 'mostPlayed', label: 'Most Played' },
     { value: 'mostDownloaded', label: 'Most Downloaded' }
   ];
-  selectedSort = 'newest';
 
   constructor(
     private fb: FormBuilder,
@@ -47,7 +50,6 @@ export class SearchComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Check for query params and populate the form - Fixed using bracket notation
     this.route.queryParams.subscribe(params => {
       if (params['term']) {
         this.searchForm.patchValue({
@@ -74,6 +76,16 @@ export class SearchComponent implements OnInit {
       this.search();
       this.updateQueryParams();
     });
+  }
+
+  calculateAverageRating(ratings: Rating[] | undefined): string {
+    if (!ratings || ratings.length === 0) {
+      return 'No ratings';
+    }
+
+    const sum = ratings.reduce((acc, rating) => acc + rating.ratingValue, 0);
+    const average = sum / ratings.length;
+    return average.toFixed(1);
   }
 
   search(): void {

@@ -74,3 +74,31 @@ input[type="range"]::-webkit-slider-thumb {
   height: 0.75rem;
   appearance: none;
 }
+
+/* Add these styles to your styles.css */
+input, textarea, select {
+  background-color: white;
+  color: black;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+}
+
+.dark-theme input,
+.dark-theme textarea,
+.dark-theme select {
+  background-color: #333;
+  color: white;
+  border-color: #555;
+}
+
+/* Fix for range inputs which should maintain their styling */
+input[type="range"] {
+  padding: 0;
+  background-color: #e5e7eb;
+  border: none;
+}
+
+.dark-theme input[type="range"] {
+  background-color: #374151;
+}
