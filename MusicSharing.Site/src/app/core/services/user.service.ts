@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { User, Activity, Song, Follower, UserUpdate } from '../models/models';
 
 @Injectable({
@@ -14,6 +14,13 @@ export class UserService {
 
   constructor(private http: HttpClient) { }
 
+  private unwrapArray<T>(value: any): T[] {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as T[];
+    if (value.$values) return value.$values as T[];
+    return value as T[];
+  }
+
   getUserById(id: number): Observable<User> {
     return this.http.get<User>(`${this.userApiUrl}/${id}`);
   }
@@ -24,19 +31,27 @@ export class UserService {
 
   // Update to use the music controller endpoint
   getUserSongs(userId: number): Observable<Song[]> {
-    return this.http.get<Song[]>(`${this.musicApiUrl}/user/${userId}/songs`);
+    return this.http.get<any>(`${this.musicApiUrl}/user/${userId}/songs`).pipe(
+      map(res => this.unwrapArray<Song>(res))
+    );
   }
 
   getUserActivity(userId: number): Observable<Activity[]> {
-    return this.http.get<Activity[]>(`${this.userApiUrl}/${userId}/analytics`);
+    return this.http.get<any>(`${this.userApiUrl}/${userId}/analytics`).pipe(
+      map(res => this.unwrapArray<Activity>(res))
+    );
   }
 
   getUserFollowers(userId: number): Observable<User[]> {
-    return this.http.get<User[]>(`${this.followerApiUrl}/${userId}/followers`);
+    return this.http.get<any>(`${this.followerApiUrl}/${userId}/followers`).pipe(
+      map(res => this.unwrapArray<User>(res))
+    );
   }
 
   getUserFollowing(userId: number): Observable<User[]> {
-    return this.http.get<User[]>(`${this.followerApiUrl}/${userId}/following`);
+    return this.http.get<any>(`${this.followerApiUrl}/${userId}/following`).pipe(
+      map(res => this.unwrapArray<User>(res))
+    );
   }
 
   followUser(followedUserId: number): Observable<any> {
@@ -75,6 +90,8 @@ export class UserService {
   }
 
   getActivityFeed(userId: number, count: number = 20): Observable<Activity[]> {
-    return this.http.get<Activity[]>(`${this.activityApiUrl}/feed/${userId}?count=${count}`);
+    return this.http.get<any>(`${this.activityApiUrl}/feed/${userId}?count=${count}`).pipe(
+      map(res => this.unwrapArray<Activity>(res))
+    );
   }
 }

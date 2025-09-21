@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Song } from '../models/models';
 import { Comment, Rating } from '../models/models';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -14,12 +15,33 @@ export class SongService {
 
   constructor(private http: HttpClient) { }
 
+  // Helper to unwrap .NET ReferenceHandler.Preserve arrays
+  private unwrapArray<T>(value: any): T[] {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as T[];
+    if (value.$values) return value.$values as T[];
+    return value as T[];
+  }
+
+  private normalizeSong(raw: any): Song {
+    return {
+      ...raw,
+      categories: this.unwrapArray(raw.categories),
+      comments: this.unwrapArray<Comment>(raw.comments),
+      ratings: this.unwrapArray<Rating>(raw.ratings)
+    } as Song;
+  }
+
   getAllSongs(): Observable<Song[]> {
-    return this.http.get<Song[]>(this.apiUrl);
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => this.unwrapArray<any>(res).map(s => this.normalizeSong(s)))
+    );
   }
 
   getSongById(id: number): Observable<Song> {
-    return this.http.get<Song>(`${this.apiUrl}/${id}`);
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(s => this.normalizeSong(s))
+    );
   }
 
   searchSongs(
@@ -41,7 +63,9 @@ export class SongService {
     if (fromDate) params = params.set('fromDate', fromDate);
     if (tags && tags.length) params = params.set('tags', tags.join(','));
 
-    return this.http.get<Song[]>(`${this.apiUrl}/search`, { params });
+    return this.http.get<any>(`${this.apiUrl}/search`, { params }).pipe(
+      map(res => this.unwrapArray<any>(res).map(s => this.normalizeSong(s)))
+    );
   }
 
   uploadSong(formData: FormData): Observable<Song> {
@@ -58,7 +82,9 @@ export class SongService {
 
   // Comments
   getComments(songId: number) {
-    return this.http.get<Comment[]>(`${this.commentApiUrl}/song/${songId}`);
+    return this.http.get<any>(`${this.commentApiUrl}/song/${songId}`).pipe(
+      map(res => this.unwrapArray<Comment>(res))
+    );
   }
 
   addComment(comment: { songId: number, commentText: string, isAnonymous: boolean, userId: number }) {
@@ -67,7 +93,12 @@ export class SongService {
 
   // Ratings
   getRatings(songId: number) {
-    return this.http.get<{ ratings: Rating[], average: number }>(`${this.ratingApiUrl}/song/${songId}`);
+    return this.http.get<any>(`${this.ratingApiUrl}/song/${songId}`).pipe(
+      map(res => ({
+        ratings: this.unwrapArray<Rating>(res.ratings),
+        average: res.average ?? 0
+      }))
+    );
   }
 
   addOrUpdateRating(rating: { songId: number, userId: number, ratingValue: number }) {

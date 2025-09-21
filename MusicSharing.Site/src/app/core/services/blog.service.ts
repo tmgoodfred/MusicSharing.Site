@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { BlogPost, Comment as AppComment } from '../models/models';
 
 @Injectable({
@@ -12,8 +12,17 @@ export class BlogService {
 
   constructor(private http: HttpClient) { }
 
+  private unwrapArray<T>(value: any): T[] {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as T[];
+    if (value.$values) return value.$values as T[];
+    return value as T[];
+  }
+
   getAllPosts(): Observable<BlogPost[]> {
-    return this.http.get<BlogPost[]>(this.apiUrl);
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => this.unwrapArray<BlogPost>(res))
+    );
   }
 
   getPostById(id: number): Observable<BlogPost> {
@@ -32,9 +41,10 @@ export class BlogService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
-  // Use app Comment model to avoid DOM Comment conflict
   getBlogComments(blogId: number): Observable<AppComment[]> {
-    return this.http.get<AppComment[]>(`${this.commentApiUrl}/blog/${blogId}`);
+    return this.http.get<any>(`${this.commentApiUrl}/blog/${blogId}`).pipe(
+      map(res => this.unwrapArray<AppComment>(res))
+    );
   }
 
   addBlogComment(comment: { blogPostId: number; commentText: string; isAnonymous: boolean; userId: number }): Observable<AppComment> {
