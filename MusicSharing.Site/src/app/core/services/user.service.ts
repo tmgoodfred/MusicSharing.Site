@@ -10,6 +10,7 @@ export class UserService {
   private userApiUrl = 'http://192.168.1.217:5000/api/user';
   private followerApiUrl = 'http://192.168.1.217:5000/api/follower';
   private musicApiUrl = 'http://192.168.1.217:5000/api/music';
+  private activityApiUrl = 'http://192.168.1.217:5000/api/activity';
 
   constructor(private http: HttpClient) { }
 
@@ -71,5 +72,9 @@ export class UserService {
   private getCurrentUserId(): number {
     const userId = localStorage.getItem('userId');
     return userId ? parseInt(userId) : 0;
+  }
+
+  getActivityFeed(userId: number, count: number = 20): Observable<Activity[]> {
+    return this.http.get<Activity[]>(`${this.activityApiUrl}/feed/${userId}?count=${count}`);
   }
 }

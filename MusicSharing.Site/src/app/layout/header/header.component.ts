@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { Observable } from 'rxjs';
@@ -17,6 +17,8 @@ export class HeaderComponent {
   isDarkMode$: Observable<boolean>;
   currentUser$: Observable<User | null>;
   isDropdownOpen = false; // Add this property
+  menuOpen = false;
+  isMobile = false;
 
   constructor(
     private themeService: ThemeService,
@@ -24,6 +26,28 @@ export class HeaderComponent {
   ) {
     this.isDarkMode$ = this.themeService.darkMode$;
     this.currentUser$ = this.authService.currentUser$;
+    this.checkMobile();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkMobile();
+  }
+
+  @HostListener('window:orientationchange')
+  onOrientationChange() {
+    this.checkMobile();
+  }
+
+  checkMobile() {
+    this.isMobile = window.innerHeight > window.innerWidth;
+    if (!this.isMobile) {
+      this.menuOpen = false;
+    }
+  }
+
+  toggleMenu() {
+    this.menuOpen = !this.menuOpen;
   }
 
   toggleTheme(): void {

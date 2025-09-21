@@ -18,7 +18,7 @@ import { AdminGuard } from '../../core/guards/admin.guard';
     BlogCreateEditComponent,
     RouterModule.forChild([
       { path: '', component: BlogListComponent },
-      { path: 'create', component: BlogCreateEditComponent, canActivate: [AuthGuard, AdminGuard] },
+      { path: 'create', component: BlogCreateEditComponent, canActivate: [AuthGuard] },
       { path: ':id', component: BlogDetailComponent },
       { path: ':id/edit', component: BlogCreateEditComponent, canActivate: [AuthGuard, AdminGuard] }
     ])

@@ -47,7 +47,8 @@ export interface Playlist {
 
 export interface Comment {
   id: number;
-  songId: number;
+  songId?: number;
+  blogPostId?: number;
   userId?: number;
   commentText: string;
   isAnonymous: boolean;

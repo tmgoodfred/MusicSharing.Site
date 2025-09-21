@@ -1,0 +1,7 @@
+@media (max-width: 767px) {
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
+    display: flex;
+  }
+}

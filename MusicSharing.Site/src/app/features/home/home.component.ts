@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { Activity } from '../../core/models/models';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../core/services/user.service';
+import { User } from '../../core/models/models';
 
 @Component({
   selector: 'app-home',
@@ -12,12 +15,18 @@ import { RouterModule } from '@angular/router';
 })
 export class HomeComponent implements OnInit {
   activities: Activity[] = [];
+  currentUser: User | null = null;
 
-  constructor() { }
+  constructor(
+    private userService: UserService,
+    private authService: AuthService
+  ) { }
 
   ngOnInit(): void {
-    // This will be replaced with an API call later
-    this.loadDummyActivities();
+    this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.loadActivityFeed();
+    });
   }
 
   // Helper method for safe access to username's first character
@@ -43,25 +52,16 @@ export class HomeComponent implements OnInit {
     return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
   }
 
-  private loadDummyActivities(): void {
-    // Just for initial UI development
-    this.activities = [
-      {
-        id: 1,
-        userId: 1,
-        type: 'Upload',
-        data: JSON.stringify({ songId: 1, songTitle: 'My First Song' }),
-        createdAt: new Date().toISOString(),
-        user: { id: 1, username: 'user1', email: 'user1@example.com', role: 0, createdAt: new Date().toISOString() }
+  loadActivityFeed(): void {
+    const userId = this.currentUser ? this.currentUser.id : 5;
+    this.userService.getActivityFeed(userId).subscribe({
+      next: (activities) => {
+        this.activities = activities;
       },
-      {
-        id: 2,
-        userId: 2,
-        type: 'Comment',
-        data: JSON.stringify({ songId: 1, commentText: 'Great song!' }),
-        createdAt: new Date(Date.now() - 3600000).toISOString(),
-        user: { id: 2, username: 'user2', email: 'user2@example.com', role: 0, createdAt: new Date().toISOString() }
+      error: () => {
+        this.activities = [];
       }
-    ];
+    });
   }
+
 }

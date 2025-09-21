@@ -2,12 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Song } from '../models/models';
+import { Comment, Rating } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SongService {
   private apiUrl = 'http://192.168.1.217:5000/api/music';
+  private commentApiUrl = 'http://192.168.1.217:5000/api/comment';
+  private ratingApiUrl = 'http://192.168.1.217:5000/api/rating';
 
   constructor(private http: HttpClient) { }
 
@@ -51,5 +54,23 @@ export class SongService {
 
   deleteSong(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  // Comments
+  getComments(songId: number) {
+    return this.http.get<Comment[]>(`${this.commentApiUrl}/song/${songId}`);
+  }
+
+  addComment(comment: { songId: number, commentText: string, isAnonymous: boolean, userId: number }) {
+    return this.http.post<Comment>(`${this.commentApiUrl}`, comment);
+  }
+
+  // Ratings
+  getRatings(songId: number) {
+    return this.http.get<{ ratings: Rating[], average: number }>(`${this.ratingApiUrl}/song/${songId}`);
+  }
+
+  addOrUpdateRating(rating: { songId: number, userId: number, ratingValue: number }) {
+    return this.http.post<Rating>(`${this.ratingApiUrl}`, rating);
   }
 }

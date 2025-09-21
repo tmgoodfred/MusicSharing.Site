@@ -3,6 +3,17 @@
     <div class="flex items-center">
       <a routerLink="/" class="text-xl font-bold">Music Sharing</a>
 
+      <!-- Hamburger button for mobile -->
+      <button class="ml-4 flex flex-col justify-center md:hidden w-8 h-8 focus:outline-none"
+              (click)="toggleMenu()"
+              *ngIf="isMobile"
+              aria-label="Open navigation menu">
+        <span class="block w-8 h-1 bg-gray-800 dark:bg-gray-200 mb-1 rounded transition-all"></span>
+        <span class="block w-8 h-1 bg-gray-800 dark:bg-gray-200 mb-1 rounded transition-all"></span>
+        <span class="block w-8 h-1 bg-gray-800 dark:bg-gray-200 rounded transition-all"></span>
+      </button>
+
+      <!-- Desktop nav -->
       <nav class="ml-8 hidden md:block">
         <ul class="flex space-x-6">
           <li><a routerLink="/" routerLinkActive="text-primary" [routerLinkActiveOptions]="{exact: true}" class="hover:text-primary transition-colors">Home</a></li>
@@ -59,4 +70,24 @@
       </ng-template>
     </div>
   </div>
+
+  <!-- Mobile nav menu -->
+  <nav class="mobile-nav"
+       [class.open]="menuOpen"
+       *ngIf="isMobile">
+    <button class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center"
+            (click)="toggleMenu()"
+            aria-label="Close navigation menu">
+      <svg class="w-6 h-6 text-gray-800 dark:text-gray-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+    <ul class="flex flex-col space-y-8 text-xl">
+      <li><a routerLink="/" routerLinkActive="text-primary" [routerLinkActiveOptions]="{exact: true}" (click)="toggleMenu()" class="hover:text-primary transition-colors">Home</a></li>
+      <li><a routerLink="/songs" routerLinkActive="text-primary" (click)="toggleMenu()" class="hover:text-primary transition-colors">Songs</a></li>
+      <li><a routerLink="/playlists" routerLinkActive="text-primary" (click)="toggleMenu()" class="hover:text-primary transition-colors">Playlists</a></li>
+      <li><a routerLink="/blog" routerLinkActive="text-primary" (click)="toggleMenu()" class="hover:text-primary transition-colors">Blog</a></li>
+      <li><a routerLink="/search" routerLinkActive="text-primary" (click)="toggleMenu()" class="hover:text-primary transition-colors">Search</a></li>
+    </ul>
+  </nav>
 </header>

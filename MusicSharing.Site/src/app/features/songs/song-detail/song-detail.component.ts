@@ -60,24 +60,38 @@ export class SongDetailComponent implements OnInit {
       next: (song) => {
         this.song = song;
         this.isLoading = false;
-
-        // Calculate average rating
-        if (song.ratings && song.ratings.length > 0) {
-          this.averageRating = song.ratings.reduce((sum, rating) => sum + rating.ratingValue, 0) / song.ratings.length;
-        }
-
-        // Get user's rating if logged in
-        if (this.currentUser && song.ratings) {
-          const userRating = song.ratings.find(r => r.userId === this.currentUser?.id);
-          if (userRating) {
-            this.userRating = userRating.ratingValue;
-          }
-        }
+        this.loadComments();
+        this.loadRatings();
       },
       error: (error) => {
         this.error = 'Error loading song details';
         this.isLoading = false;
         console.error('Error loading song', error);
+      }
+    });
+  }
+
+  loadRatings(): void {
+    if (!this.song) return;
+    this.songService.getRatings(this.song.id).subscribe({
+      next: (result) => {
+        if (this.song) {
+          this.song.ratings = result.ratings;
+          this.averageRating = result.average;
+          if (this.currentUser) {
+            const userRating = result.ratings.find(r => r.userId === this.currentUser?.id);
+            this.userRating = userRating ? userRating.ratingValue : 0;
+          }
+        }
+      }
+    });
+  }
+
+  loadComments(): void {
+    if (!this.song) return;
+    this.songService.getComments(this.song.id).subscribe({
+      next: (comments) => {
+        if (this.song) this.song.comments = comments;
       }
     });
   }
@@ -114,27 +128,19 @@ export class SongDetailComponent implements OnInit {
       userId: this.currentUser.id
     };
 
-    // In a real implementation, you would call a comment service here
-    // For now, we'll just simulate adding the comment to the song
-    const newComment: Comment = {
-      id: Math.floor(Math.random() * 10000), // This would come from the server in real app
-      ...comment,
-      createdAt: new Date().toISOString(),
-      user: !comment.isAnonymous ? this.currentUser : undefined
-    };
-
-    // Add comment to the song
-    if (!this.song.comments) {
-      this.song.comments = [];
-    }
-    this.song.comments.push(newComment);
-
-    // Reset form
-    this.commentForm.reset({
-      commentText: '',
-      isAnonymous: false
+    this.songService.addComment(comment).subscribe({
+      next: () => {
+        this.loadComments();
+        this.commentForm.reset({
+          commentText: '',
+          isAnonymous: false
+        });
+        this.isSubmittingComment = false;
+      },
+      error: () => {
+        this.isSubmittingComment = false;
+      }
     });
-    this.isSubmittingComment = false;
   }
 
   setRating(rating: number): void {
@@ -144,29 +150,17 @@ export class SongDetailComponent implements OnInit {
 
     this.userRating = rating;
 
-    // In a real app, you'd make an API call here
-    if (!this.song.ratings) {
-      this.song.ratings = [];
-    }
+    const ratingObj = {
+      songId: this.song.id,
+      userId: this.currentUser.id,
+      ratingValue: rating
+    };
 
-    const existingRatingIndex = this.song.ratings.findIndex(r => r.userId === this.currentUser!.id);
-
-    if (existingRatingIndex > -1) {
-      // Update existing rating
-      this.song.ratings[existingRatingIndex].ratingValue = rating;
-    } else {
-      // Add new rating
-      this.song.ratings.push({
-        id: Math.floor(Math.random() * 10000),
-        songId: this.song.id,
-        userId: this.currentUser.id,
-        ratingValue: rating,
-        createdAt: new Date().toISOString()
-      });
-    }
-
-    // Recalculate average
-    this.averageRating = this.song.ratings.reduce((sum, r) => sum + r.ratingValue, 0) / this.song.ratings.length;
+    this.songService.addOrUpdateRating(ratingObj).subscribe({
+      next: () => {
+        this.loadRatings();
+      }
+    });
   }
 
   formatDate(dateString: string): string {
