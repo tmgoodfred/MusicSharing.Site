@@ -12,6 +12,6 @@ if [ -n "$API_URL" ]; then
   echo "export const environment = { production: true,  apiUrl: '$API_URL' };" > src/environments/environment.prod.ts
 fi
 
-PORT="${PORT:-8353}"
+PORT="${PORT:-4200}"
 echo "Starting Angular application on port ${PORT}..."
 exec npm start -- --host 0.0.0.0 --port "${PORT}" --disable-host-check

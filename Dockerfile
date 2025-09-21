@@ -10,7 +10,7 @@ COPY . .
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Angular dev server port
-EXPOSE 8353
+EXPOSE 4200
 
 # Use your entrypoint (installs deps, writes env, runs ng serve)
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
