@@ -69,6 +69,13 @@ jobs:
         ssh-keyscan -H ${{ secrets.SERVER_IP }} > ~/.ssh/temp_known_hosts
         cat ~/.ssh/temp_known_hosts >> ~/.ssh/known_hosts
 
+    - name: Debug secrets
+      run: |
+        # Check if secrets are available (without revealing their values)
+        if [ -z "${{ secrets.SERVER_IP }}" ]; then echo "SERVER_IP is empty!"; else echo "SERVER_IP is set"; fi
+        if [ -z "${{ secrets.SSH_USER }}" ]; then echo "SSH_USER is empty!"; else echo "SSH_USER is set"; fi
+        if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then echo "SSH_PRIVATE_KEY is empty!"; else echo "SSH_PRIVATE_KEY is set"; fi
+
     - name: Test SSH connection
       run: |
         echo "Testing SSH connection..."
@@ -85,11 +92,11 @@ jobs:
           docker stop music-sharing-app || true
           docker rm music-sharing-app || true
           
-        # Run the new container
-        docker run -d \
-          --name music-sharing-app \
-          -p 8080:4200 \
-          -e API_URL=${{ secrets.API_URL }} \
-          --restart unless-stopped \
-          ghcr.io/${{ github.repository }}:latest
+          # Run the new container (fixed indentation)
+          docker run -d \\
+            --name music-sharing-app \\
+            -p 8080:4200 \\
+            -e API_URL=${{ secrets.API_URL }} \\
+            --restart unless-stopped \\
+            ghcr.io/${{ github.repository }}:latest
         "
