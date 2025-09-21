@@ -94,7 +94,7 @@ jobs:
               docker rm music-sharing-app || true
               docker run -d \
                 --name music-sharing-app \
-                -p 8088:4200 \
+                -p 4526:8353 \
                 -e API_URL='${{ secrets.API_URL }}' \
                 --restart unless-stopped \
                 ${IMAGE}:latest
