@@ -110,12 +110,12 @@ jobs:
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
-               -d "{\"content\": \"✅ Deployment succeeded on master!\"}" \
+               -d "{\"content\": \"✅ Site deployment succeeded!\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Notify Discord (failure)
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
-               -d "{\"content\": \"❌ Deployment failed on master!\"}" \
+               -d "{\"content\": \"❌ Site deployment failed.\"}" \
                ${{ secrets.DISCORD_WEBHOOK_URL }}
