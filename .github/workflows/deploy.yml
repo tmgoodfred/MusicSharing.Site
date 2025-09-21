@@ -85,11 +85,11 @@ jobs:
           docker stop music-sharing-app || true
           docker rm music-sharing-app || true
           
-          # Run the new container
-          docker run -d \
-            --name music-sharing-app \
-            -p 8080:80 \
-            -e API_URL=${{ secrets.API_URL }} \
-            --restart unless-stopped \
-            ghcr.io/${{ github.repository }}:latest
+        # Run the new container
+        docker run -d \
+          --name music-sharing-app \
+          -p 8080:4200 \
+          -e API_URL=${{ secrets.API_URL }} \
+          --restart unless-stopped \
+          ghcr.io/${{ github.repository }}:latest
         "
