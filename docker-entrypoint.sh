@@ -1,6 +1,5 @@
 #!/bin/sh
 set -e
-
 cd /app/MusicSharing.Site
 
 echo "Installing dependencies..."
