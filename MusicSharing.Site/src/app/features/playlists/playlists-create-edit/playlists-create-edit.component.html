@@ -1,0 +1,165 @@
+<div class="container mx-auto py-8">
+  <div class="max-w-4xl mx-auto bg-card-background rounded-lg shadow-lg p-6 md:p-8">
+    <h1 class="text-2xl font-bold mb-6">{{ isEditMode ? 'Edit Playlist' : 'Create New Playlist' }}</h1>
+
+    <div *ngIf="error" class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-6">
+      {{ error }}
+    </div>
+
+    <form [formGroup]="playlistForm" (ngSubmit)="onSubmit()">
+      <div class="mb-6">
+        <label for="name" class="block mb-2 font-medium">Playlist Name</label>
+        <input type="text"
+               id="name"
+               formControlName="name"
+               class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+               [ngClass]="{'border-red-500': playlistForm.get('name')?.invalid && playlistForm.get('name')?.touched}"
+               placeholder="My Awesome Playlist">
+        <div *ngIf="playlistForm.get('name')?.invalid && playlistForm.get('name')?.touched" class="text-red-500 mt-1">
+          <span *ngIf="playlistForm.get('name')?.errors?.['required']">Playlist name is required</span>
+          <span *ngIf="playlistForm.get('name')?.errors?.['maxlength']">Playlist name must be less than 100 characters</span>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label for="description" class="block mb-2 font-medium">Description (Optional)</label>
+        <textarea id="description"
+                  formControlName="description"
+                  rows="3"
+                  class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary resize-y"
+                  [ngClass]="{'border-red-500': playlistForm.get('description')?.invalid && playlistForm.get('description')?.touched}"
+                  placeholder="A collection of my favorite songs"></textarea>
+        <div *ngIf="playlistForm.get('description')?.invalid && playlistForm.get('description')?.touched" class="text-red-500 mt-1">
+          <span *ngIf="playlistForm.get('description')?.errors?.['maxlength']">Description must be less than 500 characters</span>
+        </div>
+      </div>
+
+      <div class="border-t border-gray-200 dark:border-gray-700 pt-6 my-6">
+        <h2 class="text-lg font-semibold mb-4">Playlist Songs</h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Available songs -->
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <h3 class="font-medium mb-3">Available Songs</h3>
+
+            <div class="mb-3">
+              <input type="text"
+                     [(ngModel)]="searchQuery"
+                     [ngModelOptions]="{standalone: true}"
+                     (input)="onSearchChange()"
+                     placeholder="Search songs..."
+                     class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm">
+            </div>
+
+            <div *ngIf="isLoadingSongs" class="flex justify-center py-4">
+              <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+
+            <div *ngIf="!isLoadingSongs && filteredSongs.length === 0" class="text-center py-4 text-gray-500">
+              No songs available
+            </div>
+
+            <div class="h-80 overflow-y-auto">
+              <div *ngFor="let song of filteredSongs"
+                   class="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded mb-1">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 mr-2">
+                    <img *ngIf="song.artworkPath"
+                         [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                         alt="Album art"
+                         class="w-full h-full object-cover rounded">
+                    <div *ngIf="!song.artworkPath"
+                         class="w-full h-full bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="truncate">
+                    <div class="font-medium truncate text-sm">{{ song.title }}</div>
+                    <div class="text-xs text-gray-500">{{ song.artist }}</div>
+                  </div>
+                </div>
+                <button type="button"
+                        (click)="addSong(song)"
+                        class="text-primary hover:text-primary-dark"
+                        title="Add to playlist">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected songs -->
+          <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+            <h3 class="font-medium mb-3">Selected Songs</h3>
+
+            <div *ngIf="selectedSongs.length === 0" class="text-center py-10 text-gray-500">
+              No songs added yet
+            </div>
+
+            <div class="h-80 overflow-y-auto">
+              <div *ngFor="let song of selectedSongs; let i = index"
+                   class="flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded mb-1">
+                <div class="flex items-center">
+                  <div class="w-6 h-6 flex items-center justify-center mr-2 text-sm">
+                    {{ i + 1 }}
+                  </div>
+                  <div class="w-8 h-8 mr-2">
+                    <img *ngIf="song.artworkPath"
+                         [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                         alt="Album art"
+                         class="w-full h-full object-cover rounded">
+                    <div *ngIf="!song.artworkPath"
+                         class="w-full h-full bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div class="truncate">
+                    <div class="font-medium truncate text-sm">{{ song.title }}</div>
+                    <div class="text-xs text-gray-500">{{ song.artist }}</div>
+                  </div>
+                </div>
+                <button type="button"
+                        (click)="removeSong(song)"
+                        class="text-red-500 hover:text-red-600"
+                        title="Remove from playlist">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4">
+        <button type="button"
+                routerLink="/playlists"
+                class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+          Cancel
+        </button>
+
+        <button type="submit"
+                class="btn-primary flex items-center"
+                [disabled]="playlistForm.invalid || isSubmitting">
+          <ng-container *ngIf="isSubmitting">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </ng-container>
+          {{ isEditMode ? 'Save Changes' : 'Create Playlist' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

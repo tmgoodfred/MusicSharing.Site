@@ -1,0 +1,62 @@
+<header class="header bg-card-background shadow-md">
+  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center">
+      <a routerLink="/" class="text-xl font-bold">Music Sharing</a>
+
+      <nav class="ml-8 hidden md:block">
+        <ul class="flex space-x-6">
+          <li><a routerLink="/" routerLinkActive="text-primary" [routerLinkActiveOptions]="{exact: true}" class="hover:text-primary transition-colors">Home</a></li>
+          <li><a routerLink="/songs" routerLinkActive="text-primary" class="hover:text-primary transition-colors">Songs</a></li>
+          <li><a routerLink="/playlists" routerLinkActive="text-primary" class="hover:text-primary transition-colors">Playlists</a></li>
+          <li><a routerLink="/blog" routerLinkActive="text-primary" class="hover:text-primary transition-colors">Blog</a></li>
+          <li><a routerLink="/search" routerLinkActive="text-primary" class="hover:text-primary transition-colors">Search</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <!-- Theme toggle -->
+      <button (click)="toggleTheme()"
+              class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Toggle theme">
+        <ng-container *ngIf="(isDarkMode$ | async); else lightIcon">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" />
+          </svg>
+        </ng-container>
+        <ng-template #lightIcon>
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+          </svg>
+        </ng-template>
+      </button>
+
+      <!-- User menu -->
+      <ng-container *ngIf="(currentUser$ | async) as user; else loginButtons">
+        <div class="relative">
+          <button class="flex items-center space-x-1">
+            <span>{{ user.username }}</span>
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <!-- Dropdown menu -->
+          <div class="absolute right-0 mt-2 w-48 bg-card-background rounded-md shadow-lg z-10">
+            <div class="py-1">
+              <a routerLink="/profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+              <a routerLink="/settings" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Settings</a>
+              <button (click)="logout()" class="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Logout</button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #loginButtons>
+        <div class="space-x-2">
+          <a routerLink="/login" class="btn-secondary">Login</a>
+          <a routerLink="/register" class="btn-primary">Register</a>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</header>

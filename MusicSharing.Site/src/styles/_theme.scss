@@ -1,0 +1,26 @@
+@import './variables';
+
+// Theme class that will be toggled
+.light-theme {
+  --primary: #{$light-primary};
+  --accent: #{$light-accent};
+  --warn: #{$light-warn};
+  --background: #{$light-background};
+  --card-background: #{$light-card-background};
+  --text: #{$light-text};
+}
+
+.dark-theme {
+  --primary: #{$dark-primary};
+  --accent: #{$dark-accent};
+  --warn: #{$dark-warn};
+  --background: #{$dark-background};
+  --card-background: #{$dark-card-background};
+  --text: #{$dark-text};
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}

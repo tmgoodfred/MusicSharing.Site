@@ -1,0 +1,25 @@
+<div>
+  <h1 class="text-2xl font-bold mb-6">Activity Feed</h1>
+
+  <div *ngIf="activities.length === 0" class="text-center py-8">
+    <p class="text-gray-500">No activity to show yet.</p>
+  </div>
+
+  <div *ngIf="activities.length > 0" class="space-y-4">
+    <div *ngFor="let activity of activities"
+         class="p-4 bg-card-background rounded-lg shadow">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+            {{ activity.user?.username.charAt(0) }}
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="font-medium">{{ activity.user?.username }}</p>
+          <p class="text-sm text-gray-500">{{ formatActivityType(activity) }}</p>
+          <p class="text-xs text-gray-400">{{ formatDate(activity.createdAt) }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

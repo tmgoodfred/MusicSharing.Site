@@ -1,0 +1,168 @@
+<div class="container mx-auto py-8">
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="flex justify-center py-10">
+    <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error" class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+
+  <!-- Playlist content -->
+  <div *ngIf="!isLoading && playlist" class="bg-card-background rounded-lg shadow-lg overflow-hidden">
+    <!-- Playlist header -->
+    <div class="bg-gray-100 dark:bg-gray-800 p-8">
+      <div class="flex flex-col md:flex-row items-center md:items-start">
+        <!-- Playlist artwork collage -->
+        <div class="w-40 h-40 md:mr-6 mb-4 md:mb-0 bg-gray-300 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md flex-shrink-0">
+          <div class="grid grid-cols-2 grid-rows-2 h-full w-full">
+            <div *ngFor="let song of playlist.songs?.slice(0, 4)" class="overflow-hidden">
+              <img *ngIf="song.artworkPath"
+                   [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                   alt="Album art"
+                   class="h-full w-full object-cover">
+              <div *ngIf="!song.artworkPath" class="h-full w-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            <div *ngIf="playlist.songs?.length === 0 || !playlist.songs" class="col-span-2 row-span-2 flex items-center justify-center">
+              <svg class="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playlist info -->
+        <div class="flex-1 text-center md:text-left">
+          <h1 class="text-2xl md:text-3xl font-bold">{{ playlist.name }}</h1>
+          <p *ngIf="playlist.description" class="text-gray-600 dark:text-gray-300 mt-2">{{ playlist.description }}</p>
+          <div class="flex flex-col md:flex-row md:items-center md:space-x-4 mt-3">
+            <p class="text-sm text-gray-500">
+              Created by <span class="font-medium">{{ playlist.user?.username || 'Unknown' }}</span>
+            </p>
+            <p class="text-sm text-gray-500 mt-1 md:mt-0">
+              {{ playlist.songs?.length || 0 }} songs
+            </p>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+            <button *ngIf="playlist.songs?.length"
+                    (click)="playAll()"
+                    class="btn-primary flex items-center">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+              </svg>
+              Play All
+            </button>
+
+            <a *ngIf="isOwner" [routerLink]="['/playlists', playlist.id, 'edit']" class="btn-secondary flex items-center">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              Edit Playlist
+            </a>
+
+            <button *ngIf="isOwner" (click)="deletePlaylist()" class="flex items-center px-4 py-2 border border-red-500 text-red-500 rounded hover:bg-red-500 hover:text-white transition">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Song list -->
+    <div class="p-6">
+      <div *ngIf="!playlist.songs?.length" class="text-center py-10">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+        <h3 class="mt-2 text-lg font-medium">This playlist is empty</h3>
+        <p class="mt-1 text-gray-500">
+          {{ isOwner ? 'Add some songs to get started.' : 'No songs have been added to this playlist yet.' }}
+        </p>
+        <div *ngIf="isOwner" class="mt-6">
+          <a [routerLink]="['/playlists', playlist.id, 'edit']" class="btn-primary">Add Songs</a>
+        </div>
+      </div>
+
+      <div *ngIf="playlist.songs?.length">
+        <table class="min-w-full">
+          <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-700">
+              <th class="py-3 px-3 text-left">#</th>
+              <th class="py-3 text-left">Title</th>
+              <th class="py-3 text-left">Artist</th>
+              <th class="py-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let song of playlist.songs; let i = index"
+                class="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <td class="py-4 px-3">{{ i + 1 }}</td>
+              <td class="py-4">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 mr-3">
+                    <img *ngIf="song.artworkPath"
+                         [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                         alt="Album art"
+                         class="w-full h-full object-cover rounded">
+                    <div *ngIf="!song.artworkPath"
+                         class="w-full h-full bg-gray-300 dark:bg-gray-700 rounded flex items-center justify-center">
+                      <svg class="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>{{ song.title }}</div>
+                </div>
+              </td>
+              <td class="py-4">{{ song.artist }}</td>
+              <td class="py-4">
+                <div class="flex items-center justify-center space-x-3">
+                  <button (click)="playSong(song)" class="text-gray-500 hover:text-primary" title="Play">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+
+                  <button (click)="addToQueue(song)" class="text-gray-500 hover:text-primary" title="Add to queue">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                    </svg>
+                  </button>
+
+                  <a [routerLink]="['/songs', song.id]" class="text-gray-500 hover:text-primary" title="View song details">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                    </svg>
+                  </a>
+
+                  <button *ngIf="isOwner"
+                          (click)="removeSongFromPlaylist(song.id)"
+                          class="text-gray-500 hover:text-red-500"
+                          title="Remove from playlist">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

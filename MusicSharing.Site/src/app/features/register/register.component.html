@@ -1,0 +1,77 @@
+<div class="max-w-md mx-auto mt-10 bg-card-background p-8 rounded-lg shadow">
+  <h2 class="text-2xl font-semibold mb-6">Create an Account</h2>
+
+  <div *ngIf="errorMessage" class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+    <div class="mb-4">
+      <label for="username" class="block mb-2">Username</label>
+      <input type="text"
+             id="username"
+             formControlName="username"
+             class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+             [ngClass]="{'border-red-500': registerForm.get('username')?.invalid && registerForm.get('username')?.touched}">
+      <div *ngIf="registerForm.get('username')?.invalid && registerForm.get('username')?.touched" class="text-red-500 mt-1">
+        <span *ngIf="registerForm.get('username')?.errors?.['required']">Username is required</span>
+        <span *ngIf="registerForm.get('username')?.errors?.['minlength']">Username must be at least 3 characters</span>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label for="email" class="block mb-2">Email</label>
+      <input type="email"
+             id="email"
+             formControlName="email"
+             class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+             [ngClass]="{'border-red-500': registerForm.get('email')?.invalid && registerForm.get('email')?.touched}">
+      <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="text-red-500 mt-1">
+        <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
+        <span *ngIf="registerForm.get('email')?.errors?.['email']">Enter a valid email</span>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label for="password" class="block mb-2">Password</label>
+      <input type="password"
+             id="password"
+             formControlName="password"
+             class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+             [ngClass]="{'border-red-500': registerForm.get('password')?.invalid && registerForm.get('password')?.touched}">
+      <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="text-red-500 mt-1">
+        <span *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</span>
+        <span *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 6 characters</span>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <label for="confirmPassword" class="block mb-2">Confirm Password</label>
+      <input type="password"
+             id="confirmPassword"
+             formControlName="confirmPassword"
+             class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+             [ngClass]="{'border-red-500': (registerForm.get('confirmPassword')?.invalid || registerForm.errors?.['passwordMismatch']) && registerForm.get('confirmPassword')?.touched}">
+      <div *ngIf="(registerForm.get('confirmPassword')?.invalid || registerForm.errors?.['passwordMismatch']) && registerForm.get('confirmPassword')?.touched" class="text-red-500 mt-1">
+        <span *ngIf="registerForm.get('confirmPassword')?.errors?.['required']">Please confirm your password</span>
+        <span *ngIf="registerForm.errors?.['passwordMismatch']">Passwords do not match</span>
+      </div>
+    </div>
+
+    <button type="submit"
+            class="btn-primary w-full flex justify-center"
+            [disabled]="registerForm.invalid || isSubmitting">
+      <ng-container *ngIf="isSubmitting">
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </ng-container>
+      Register
+    </button>
+  </form>
+
+  <div class="mt-4 text-center">
+    <p>Already have an account? <a routerLink="/auth/login" class="text-primary hover:underline">Log in</a></p>
+  </div>
+</div>

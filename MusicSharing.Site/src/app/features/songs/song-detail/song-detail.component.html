@@ -1,0 +1,184 @@
+<div class="container mx-auto py-8">
+  <div *ngIf="isLoading" class="flex justify-center py-10">
+    <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+
+  <div *ngIf="error" class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!isLoading && song" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <!-- Left column with song info and artwork -->
+    <div class="md:col-span-1">
+      <div class="bg-card-background rounded-lg shadow-lg overflow-hidden">
+        <div class="relative">
+          <img *ngIf="song.artworkPath"
+               [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+               [alt]="song.title"
+               class="w-full aspect-square object-cover">
+          <div *ngIf="!song.artworkPath" class="w-full aspect-square bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
+            <svg class="w-20 h-20 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <button (click)="playSong()"
+                  class="absolute bottom-4 right-4 bg-primary text-white rounded-full p-4 shadow-lg hover:bg-opacity-90 transition">
+            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <h1 class="text-2xl font-bold">{{ song.title }}</h1>
+          <h2 class="text-lg text-gray-600 dark:text-gray-400 mb-3">{{ song.artist }}</h2>
+
+          <div class="flex items-center mb-4">
+            <div class="flex items-center">
+              <span class="mr-2">Rating: </span>
+              <div class="flex">
+                <svg *ngFor="let star of [1, 2, 3, 4, 5]"
+                     class="w-5 h-5"
+                     [class.text-yellow-500]="star <= averageRating"
+                     [class.text-gray-300]="star > averageRating"
+                     fill="currentColor"
+                     viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+              <span class="ml-2">({{ song.ratings?.length || 0 }})</span>
+            </div>
+          </div>
+
+          <div *ngIf="currentUser" class="mb-6">
+            <p class="mb-2">Rate this song:</p>
+            <div class="flex">
+              <button *ngFor="let star of [1, 2, 3, 4, 5]"
+                      class="focus:outline-none"
+                      [class.text-yellow-500]="star <= userRating"
+                      [class.text-gray-300]="star > userRating"
+                      (click)="setRating(star)">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex justify-between items-center text-sm">
+              <span>Uploaded</span>
+              <span>{{ formatDate(song.uploadDate) }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span>Genre</span>
+              <span>{{ song.genre || 'Not specified' }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span>Plays</span>
+              <span>{{ song.playCount }}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span>Downloads</span>
+              <span>{{ song.downloadCount }}</span>
+            </div>
+            <div *ngIf="song.tags && song.tags.length > 0" class="flex flex-wrap gap-2 mt-4">
+              <span *ngFor="let tag of song.tags" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
+                {{ tag }}
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-6 flex space-x-2">
+            <button (click)="addToQueue()" class="btn-secondary flex-1 flex justify-center items-center">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+              </svg>
+              Add to Queue
+            </button>
+            <button (click)="downloadSong()" class="btn-primary flex-1 flex justify-center items-center">
+              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column with comments -->
+    <div class="md:col-span-2">
+      <div class="bg-card-background rounded-lg shadow-lg p-6">
+        <h2 class="text-xl font-semibold mb-4">Comments</h2>
+
+        <!-- Comment form for logged in users -->
+        <div *ngIf="currentUser" class="mb-6">
+          <form [formGroup]="commentForm" (ngSubmit)="submitComment()">
+            <textarea formControlName="commentText"
+                      placeholder="Write a comment..."
+                      class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                      [ngClass]="{'border-red-500': commentForm.get('commentText')?.invalid && commentForm.get('commentText')?.touched}"
+                      rows="3"></textarea>
+            <div *ngIf="commentForm.get('commentText')?.invalid && commentForm.get('commentText')?.touched" class="text-red-500 mt-1">
+              <span *ngIf="commentForm.get('commentText')?.errors?.['required']">Comment cannot be empty</span>
+              <span *ngIf="commentForm.get('commentText')?.errors?.['minlength']">Comment must be at least 2 characters</span>
+            </div>
+
+            <div class="flex items-center justify-between mt-3">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" formControlName="isAnonymous" class="form-checkbox h-4 w-4">
+                <span>Comment anonymously</span>
+              </label>
+
+              <button type="submit"
+                      class="btn-primary"
+                      [disabled]="commentForm.invalid || isSubmittingComment">
+                <ng-container *ngIf="isSubmittingComment">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </ng-container>
+                Post Comment
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div *ngIf="!currentUser" class="mb-6 text-center py-4 bg-gray-100 dark:bg-gray-800 rounded">
+          <p>You need to be logged in to leave comments.</p>
+          <a routerLink="/auth/login" class="text-primary hover:underline mt-2 inline-block">Log In</a>
+        </div>
+
+        <!-- Comments list -->
+        <div *ngIf="song.comments && song.comments.length > 0" class="space-y-4">
+          <div *ngFor="let comment of song.comments" class="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                  {{ getCommentAuthor(comment).charAt(0) }}
+                </div>
+              </div>
+              <div class="ml-3">
+                <div class="flex items-center">
+                  <span class="font-medium">{{ getCommentAuthor(comment) }}</span>
+                  <span class="ml-2 text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
+                </div>
+                <div class="mt-1 text-gray-700 dark:text-gray-300">
+                  {{ comment.commentText }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!song.comments || song.comments.length === 0" class="text-center py-10">
+          <p class="text-gray-500">No comments yet. Be the first to leave a comment!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

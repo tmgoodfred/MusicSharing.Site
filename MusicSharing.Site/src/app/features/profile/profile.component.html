@@ -1,0 +1,286 @@
+<div class="container mx-auto py-8">
+  <!-- Loading state -->
+  <div *ngIf="isLoading" class="flex justify-center py-10">
+    <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error" class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+
+  <!-- Profile content -->
+  <div *ngIf="!isLoading && profileUser" class="grid grid-cols-1 md:grid-cols-12 gap-8">
+    <!-- Left column - User info -->
+    <div class="md:col-span-4 lg:col-span-3">
+      <div class="bg-card-background rounded-lg shadow-lg p-6">
+        <!-- Profile avatar -->
+        <div class="flex justify-center mb-4">
+          <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
+            {{ profileUser.username.charAt(0).toUpperCase() }}
+          </div>
+        </div>
+
+        <!-- Username and info -->
+        <div class="text-center mb-6">
+          <h1 class="text-xl font-bold mb-1">{{ profileUser.username }}</h1>
+          <p class="text-gray-500 text-sm">Joined {{ formatDate(profileUser.createdAt) }}</p>
+          <span *ngIf="profileUser.role === 1" class="inline-block mt-2 px-2 py-1 bg-primary text-white text-xs rounded">Admin</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="space-y-3">
+          <div *ngIf="isOwnProfile" class="flex justify-center">
+            <a routerLink="/profile/edit" class="btn-primary w-full text-center">
+              Edit Profile
+            </a>
+          </div>
+
+          <div *ngIf="!isOwnProfile && currentUser" class="flex justify-center">
+            <button *ngIf="!isFollowing"
+                    (click)="followUser()"
+                    class="btn-primary w-full">
+              Follow
+            </button>
+            <button *ngIf="isFollowing"
+                    (click)="unfollowUser()"
+                    class="btn-secondary w-full">
+              Unfollow
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
+          <div class="flex justify-around text-center">
+            <div>
+              <div class="text-xl font-bold">{{ songs.length }}</div>
+              <div class="text-gray-500 text-sm">Songs</div>
+            </div>
+            <div>
+              <div class="text-xl font-bold">{{ followers.length }}</div>
+              <div class="text-gray-500 text-sm">Followers</div>
+            </div>
+            <div>
+              <div class="text-xl font-bold">{{ following.length }}</div>
+              <div class="text-gray-500 text-sm">Following</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column - Content tabs -->
+    <div class="md:col-span-8 lg:col-span-9">
+      <!-- Tabs -->
+      <div class="bg-card-background rounded-lg shadow-lg overflow-hidden mb-8">
+        <div class="border-b border-gray-200 dark:border-gray-700">
+          <nav class="flex">
+            <button (click)="setActiveTab('songs')"
+                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    [class.border-primary]="activeTab === 'songs'"
+                    [class.border-transparent]="activeTab !== 'songs'"
+                    [class.text-primary]="activeTab === 'songs'">
+              Songs
+            </button>
+            <button (click)="setActiveTab('activity')"
+                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    [class.border-primary]="activeTab === 'activity'"
+                    [class.border-transparent]="activeTab !== 'activity'"
+                    [class.text-primary]="activeTab === 'activity'">
+              Activity
+            </button>
+            <button (click)="setActiveTab('followers')"
+                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    [class.border-primary]="activeTab === 'followers'"
+                    [class.border-transparent]="activeTab !== 'followers'"
+                    [class.text-primary]="activeTab === 'followers'">
+              Followers
+            </button>
+            <button (click)="setActiveTab('following')"
+                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    [class.border-primary]="activeTab === 'following'"
+                    [class.border-transparent]="activeTab !== 'following'"
+                    [class.text-primary]="activeTab === 'following'">
+              Following
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Content based on active tab -->
+      <!-- Songs Tab -->
+      <div *ngIf="activeTab === 'songs'">
+        <div *ngIf="songs.length === 0" class="bg-card-background rounded-lg shadow-lg p-8 text-center">
+          <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+          <h3 class="mt-4 text-lg font-medium">No songs yet</h3>
+          <p class="mt-2 text-gray-500">
+            {{ isOwnProfile ? 'You haven\'t uploaded any songs.' : 'This user hasn\'t uploaded any songs.' }}
+          </p>
+          <div *ngIf="isOwnProfile" class="mt-6">
+            <a routerLink="/songs/upload" class="btn-primary">Upload your first song</a>
+          </div>
+        </div>
+
+        <div *ngIf="songs.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div *ngFor="let song of songs"
+               class="bg-card-background rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+               [routerLink]="['/songs', song.id]">
+            <div class="relative">
+              <img *ngIf="song.artworkPath"
+                   [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                   [alt]="song.title"
+                   class="w-full h-48 object-cover">
+              <div *ngIf="!song.artworkPath" class="w-full h-48 bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
+                <svg class="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <button (click)="playSong(song); $event.stopPropagation()"
+                      class="absolute bottom-4 right-4 bg-primary text-white rounded-full p-3 shadow-lg hover:bg-opacity-90 transition">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <div class="p-4">
+              <h3 class="text-lg font-semibold truncate">{{ song.title }}</h3>
+              <p class="text-gray-500 dark:text-gray-400">{{ song.artist }}</p>
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-sm text-gray-500">{{ formatDate(song.uploadDate) }}</span>
+                <div class="flex items-center space-x-2">
+                  <span class="text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {{
+ song.ratings && song.ratings.length
+                      ? (song.ratings.reduce((sum, r) => sum + r.ratingValue, 0) / song.ratings.length).toFixed(1)
+                      : 'No ratings'
+                    }}
+                  </span>
+                  <button (click)="addToQueue(song, $event)"
+                          class="text-sm flex items-center text-primary hover:text-opacity-80"
+                          title="Add to queue">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Tab -->
+      <div *ngIf="activeTab === 'activity'">
+        <div *ngIf="activities.length === 0" class="bg-card-background rounded-lg shadow-lg p-8 text-center">
+          <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 class="mt-4 text-lg font-medium">No activity yet</h3>
+          <p class="mt-2 text-gray-500">
+            {{ isOwnProfile ? 'You haven\'t performed any actions yet.' : 'This user hasn\'t performed any actions yet.' }}
+          </p>
+        </div>
+
+        <div *ngIf="activities.length > 0" class="space-y-4">
+          <div *ngFor="let activity of activities" class="bg-card-background rounded-lg shadow-lg p-4">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                  {{ profileUser.username.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+              <div class="ml-3 flex-1">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <span class="font-medium">{{ profileUser.username }}</span>
+                    <span class="ml-1">{{ formatActivityType(activity) }}</span>
+                  </div>
+                  <span class="text-xs text-gray-500">{{ formatDate(activity.createdAt) }}</span>
+                </div>
+                <div *ngIf="activity.data" class="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                  <!-- Attempt to parse and display activity data -->
+                  <ng-container *ngIf="activity.data">
+                    <div *ngIf="activity.type === 'Comment'">
+                      "{{ (activity.data | json) }}"
+                    </div>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Followers Tab -->
+      <div *ngIf="activeTab === 'followers'">
+        <div *ngIf="followers.length === 0" class="bg-card-background rounded-lg shadow-lg p-8 text-center">
+          <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <h3 class="mt-4 text-lg font-medium">No followers yet</h3>
+          <p class="mt-2 text-gray-500">
+            {{ isOwnProfile ? 'You don\'t have any followers yet.' : 'This user doesn\'t have any followers yet.' }}
+          </p>
+        </div>
+
+        <div *ngIf="followers.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div *ngFor="let follower of followers" class="bg-card-background rounded-lg shadow-lg p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                  {{ follower.username.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+              <div class="ml-3">
+                <div class="font-medium">
+                  <a [routerLink]="['/profile', follower.id]" class="hover:text-primary">{{ follower.username }}</a>
+                </div>
+                <div class="text-xs text-gray-500">Joined {{ formatDate(follower.createdAt) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Following Tab -->
+      <div *ngIf="activeTab === 'following'">
+        <div *ngIf="following.length === 0" class="bg-card-background rounded-lg shadow-lg p-8 text-center">
+          <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <h3 class="mt-4 text-lg font-medium">Not following anyone</h3>
+          <p class="mt-2 text-gray-500">
+            {{ isOwnProfile ? 'You\'re not following anyone yet.' : 'This user isn\'t following anyone yet.' }}
+          </p>
+        </div>
+
+        <div *ngIf="following.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div *ngFor="let follow of following" class="bg-card-background rounded-lg shadow-lg p-4">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                  {{ follow.username.charAt(0).toUpperCase() }}
+                </div>
+              </div>
+              <div class="ml-3">
+                <div class="font-medium">
+                  <a [routerLink]="['/profile', follow.id]" class="hover:text-primary">{{ follow.username }}</a>
+                </div>
+                <div class="text-xs text-gray-500">Joined {{ formatDate(follow.createdAt) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
