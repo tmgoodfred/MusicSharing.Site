@@ -1,9 +1,16 @@
 #!/bin/sh
 
-# Replace API URL with environment variable if provided
+# Navigate to the project directory
+cd /app/MusicSharing.Site
+
+# Create or modify environment configuration if API_URL is provided
 if [ -n "$API_URL" ]; then
-  find /usr/share/nginx/html -name "*.js" -exec sed -i "s|http://192.168.1.217:5000|$API_URL|g" {} \;
+  echo "Configuring API URL: $API_URL"
+  # Create environment files with the provided API URL
+  echo "export const environment = { production: false, apiUrl: '$API_URL' };" > src/environments/environment.ts
+  echo "export const environment = { production: true, apiUrl: '$API_URL' };" > src/environments/environment.prod.ts
 fi
 
-# Start nginx
-exec nginx -g 'daemon off;'
+# Start the application
+echo "Starting Angular application..."
+npm start -- --host 0.0.0.0 --disable-host-check
