@@ -3,8 +3,9 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { User, UserUpdate } from '../../../core/models/models';
+import { User } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
+import { of, switchMap, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-profile-edit',
@@ -19,6 +20,12 @@ export class ProfileEditComponent implements OnInit {
   error = '';
   currentUser: User | null = null;
 
+  selectedProfilePicture: File | null = null;
+  profilePreview = '';
+
+  // Toggleable password change
+  changePassword = false;
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
@@ -28,6 +35,7 @@ export class ProfileEditComponent implements OnInit {
     this.profileForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
+      // password fields (only used if changePassword === true)
       currentPassword: [''],
       newPassword: [''],
       confirmPassword: ['']
@@ -48,19 +56,41 @@ export class ProfileEditComponent implements OnInit {
     });
   }
 
+  toggleChangePassword(): void {
+    this.changePassword = !this.changePassword;
+    if (!this.changePassword) {
+      this.profileForm.patchValue({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    }
+  }
+
+  onProfilePictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length) {
+      this.selectedProfilePicture = input.files[0];
+      this.profilePreview = URL.createObjectURL(this.selectedProfilePicture);
+    }
+  }
+
   onSubmit(): void {
     if (this.profileForm.invalid || this.isSubmitting || !this.currentUser) {
       return;
     }
 
-    // Check if password fields are filled correctly
-    if (this.profileForm.get('newPassword')?.value) {
-      if (!this.profileForm.get('currentPassword')?.value) {
-        this.error = 'You must enter your current password to set a new password.';
+    // Optional client-side check the route matches logged in user
+    const storedUserId = localStorage.getItem('userId');
+    if (!storedUserId || parseInt(storedUserId, 10) !== this.currentUser.id) {
+      this.error = 'You can only edit your own profile.';
+      return;
+    }
+
+    if (this.changePassword) {
+      const newPwd = this.profileForm.value.newPassword?.trim();
+      const confirm = this.profileForm.value.confirmPassword?.trim();
+      if (!newPwd || newPwd.length < 6) {
+        this.error = 'New password must be at least 6 characters.';
         return;
       }
-
-      if (this.profileForm.get('newPassword')?.value !== this.profileForm.get('confirmPassword')?.value) {
+      if (newPwd !== confirm) {
         this.error = 'New password and confirmation do not match.';
         return;
       }
@@ -69,32 +99,27 @@ export class ProfileEditComponent implements OnInit {
     this.isSubmitting = true;
     this.error = '';
 
-    const updatedUser: UserUpdate = {
-      username: this.profileForm.value.username,
-      email: this.profileForm.value.email
-    };
-
-    // Only include password fields if user is changing password
-    if (this.profileForm.value.newPassword) {
-      updatedUser.passwordHash = this.profileForm.value.newPassword;
-      updatedUser.currentPassword = this.profileForm.value.currentPassword;
+    // Build form-data for profile update (username/email/picture)
+    const form = new FormData();
+    form.append('username', this.profileForm.value.username);
+    form.append('email', this.profileForm.value.email);
+    if (this.selectedProfilePicture) {
+      form.append('profilePicture', this.selectedProfilePicture);
     }
 
-    this.userService.updateUser(this.currentUser.id, updatedUser).subscribe({
-      next: (user) => {
-        // Refresh the auth token/user data since it may have changed
-        this.authService.login(user.email, this.profileForm.value.currentPassword || '').subscribe({
-          next: () => {
-            this.router.navigate(['/profile']);
-          },
-          error: (err) => {
-            // If login fails, just navigate anyway, they'll need to login again
-            this.router.navigate(['/profile']);
-          }
-        });
-      },
+    // First update profile details; then, if requested, update password via JSON endpoint
+    this.userService.updateUserFormData(this.currentUser.id, form).pipe(
+      switchMap(() => {
+        if (this.changePassword) {
+          const newPwd = this.profileForm.value.newPassword as string;
+          return this.userService.updateUserPassword(this.currentUser!.id, newPwd);
+        }
+        return of(void 0);
+      }),
+      finalize(() => this.isSubmitting = false)
+    ).subscribe({
+      next: () => this.router.navigate(['/profile']),
       error: (err) => {
-        this.isSubmitting = false;
         this.error = 'Failed to update profile. ' + (err.error?.error || 'Please try again.');
         console.error('Error updating profile:', err);
       }

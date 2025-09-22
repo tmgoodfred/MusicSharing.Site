@@ -7,6 +7,26 @@
     </div>
 
     <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+      <!-- Profile picture -->
+      <div class="mb-6">
+        <label class="block mb-2 font-medium">Profile Picture</label>
+        <div class="flex items-center space-x-4">
+          <div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center">
+            <img *ngIf="profilePreview" [src]="profilePreview" class="w-full h-full object-cover" alt="Preview">
+            <div *ngIf="!profilePreview" class="text-gray-500">
+              <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 3a7 7 0 100 14 7 7 0 000-14zM8 9a2 2 0 114 0 2 2 0 01-4 0z" />
+              </svg>
+            </div>
+          </div>
+          <label class="btn-secondary cursor-pointer">
+            <input type="file" accept="image/*" class="hidden" (change)="onProfilePictureSelected($event)">
+            Choose Image
+          </label>
+        </div>
+      </div>
+
+      <!-- Username -->
       <div class="mb-6">
         <label for="username" class="block mb-2 font-medium">Username</label>
         <input type="text"
@@ -20,6 +40,7 @@
         </div>
       </div>
 
+      <!-- Email -->
       <div class="mb-6">
         <label for="email" class="block mb-2 font-medium">Email</label>
         <input type="email"
@@ -33,32 +54,23 @@
         </div>
       </div>
 
-      <div class="border-t border-gray-200 dark:border-gray-700 my-6 pt-6">
-        <h2 class="text-lg font-semibold mb-4">Change Password</h2>
-        <p class="text-gray-500 mb-4">Leave blank if you don't want to change your password</p>
+      <!-- Toggle password section -->
+      <div class="mb-2">
+        <button type="button" class="btn-secondary" (click)="toggleChangePassword()">
+          {{ changePassword ? 'Cancel Password Change' : 'Change Password' }}
+        </button>
+      </div>
 
-        <div class="mb-4">
-          <label for="currentPassword" class="block mb-2 font-medium">Current Password</label>
-          <input type="password"
-                 id="currentPassword"
-                 formControlName="currentPassword"
-                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary">
-        </div>
-
+      <!-- Password fields (only visible if toggled) -->
+      <div *ngIf="changePassword" class="border-t border-gray-200 dark:border-gray-700 my-4 pt-4">
         <div class="mb-4">
           <label for="newPassword" class="block mb-2 font-medium">New Password</label>
-          <input type="password"
-                 id="newPassword"
-                 formControlName="newPassword"
-                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary">
+          <input type="password" id="newPassword" formControlName="newPassword" class="w-full px-3 py-2 border rounded">
         </div>
 
         <div class="mb-6">
           <label for="confirmPassword" class="block mb-2 font-medium">Confirm New Password</label>
-          <input type="password"
-                 id="confirmPassword"
-                 formControlName="confirmPassword"
-                 class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary">
+          <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full px-3 py-2 border rounded">
         </div>
       </div>
 

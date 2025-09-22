@@ -10,12 +10,10 @@ import { HeaderComponent } from './layout/header/header.component';
 import { PlayerComponent } from './layout/player/player.component';
 import { HomeComponent } from './features/home/home.component';
 import { GlobalErrorHandler } from './core/error-handlers/global-error-handler';
-import { authInterceptorProvider } from './core/interceptors/auth-interceptor.provider';
+import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
 @NgModule({
-  declarations: [
-    AppComponent
-  ],
+  declarations: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -28,7 +26,7 @@ import { authInterceptorProvider } from './core/interceptors/auth-interceptor.pr
     HomeComponent
   ],
   providers: [
-    authInterceptorProvider,
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: ErrorHandler, useClass: GlobalErrorHandler }
   ],
   bootstrap: [AppComponent]

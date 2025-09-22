@@ -17,10 +17,14 @@
     <!-- Left column - User info -->
     <div class="md:col-span-4 lg:col-span-3">
       <div class="bg-card-background rounded-lg shadow-lg p-6">
-        <!-- Profile avatar -->
+        <!-- Top avatar -->
         <div class="flex justify-center mb-4">
-          <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
-            {{ profileUser.username.charAt(0).toUpperCase() }}
+          <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+            <img *ngIf="profileUser.profilePicturePath"
+                 [src]="'http://192.168.1.217:5000/api/user/' + profileUser.id + '/profile-picture'"
+                 alt="{{ profileUser.username }}"
+                 class="w-full h-full object-cover">
+            <span *ngIf="!profileUser.profilePicturePath">{{ profileUser.username.charAt(0).toUpperCase() }}</span>
           </div>
         </div>
 
@@ -228,12 +232,17 @@
           </p>
         </div>
 
+        <!-- Followers avatars -->
         <div *ngIf="followers.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div *ngFor="let follower of followers" class="bg-card-background rounded-lg shadow-lg p-4">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-                  {{ follower.username.charAt(0).toUpperCase() }}
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+                  <img *ngIf="follower.profilePicturePath"
+                       [src]="'http://192.168.1.217:5000/api/user/' + follower.id + '/profile-picture'"
+                       alt="{{ follower.username }}"
+                       class="w-full h-full object-cover">
+                  <span *ngIf="!follower.profilePicturePath">{{ follower.username.charAt(0).toUpperCase() }}</span>
                 </div>
               </div>
               <div class="ml-3">
@@ -259,12 +268,17 @@
           </p>
         </div>
 
+        <!-- Following avatars -->
         <div *ngIf="following.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div *ngFor="let follow of following" class="bg-card-background rounded-lg shadow-lg p-4">
             <div class="flex items-center">
               <div class="flex-shrink-0">
-                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-                  {{ follow.username.charAt(0).toUpperCase() }}
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+                  <img *ngIf="follow.profilePicturePath"
+                       [src]="'http://192.168.1.217:5000/api/user/' + follow.id + '/profile-picture'"
+                       alt="{{ follow.username }}"
+                       class="w-full h-full object-cover">
+                  <span *ngIf="!follow.profilePicturePath">{{ follow.username.charAt(0).toUpperCase() }}</span>
                 </div>
               </div>
               <div class="ml-3">

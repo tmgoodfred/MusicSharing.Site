@@ -91,7 +91,8 @@
               <span>{{ song.downloadCount }}</span>
             </div>
             <div *ngIf="song.tags && song.tags.length > 0" class="flex flex-wrap gap-2 mt-4">
-              <span *ngFor="let tag of song.tags" class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
+              <span *ngFor="let tag of song.tags"
+                    class="px-2 py-1 rounded-full text-xs bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
                 {{ tag }}
               </span>
             </div>

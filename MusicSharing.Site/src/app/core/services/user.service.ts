@@ -29,7 +29,15 @@ export class UserService {
     return this.http.put<User>(`${this.userApiUrl}/${id}`, userData);
   }
 
-  // Update to use the music controller endpoint
+  updateUserFormData(id: number, form: FormData): Observable<User> {
+    return this.http.put<User>(`${this.userApiUrl}/${id}`, form);
+  }
+
+  // NEW: change password endpoint (JSON)
+  updateUserPassword(id: number, newPassword: string): Observable<void> {
+    return this.http.put<void>(`${this.userApiUrl}/${id}/password`, { newPassword });
+  }
+
   getUserSongs(userId: number): Observable<Song[]> {
     return this.http.get<any>(`${this.musicApiUrl}/user/${userId}/songs`).pipe(
       map(res => this.unwrapArray<Song>(res))
@@ -57,30 +65,21 @@ export class UserService {
   followUser(followedUserId: number): Observable<any> {
     const currentUserId = this.getCurrentUserId();
     return this.http.post(`${this.followerApiUrl}/follow`, null, {
-      params: {
-        followerId: currentUserId.toString(),
-        followedId: followedUserId.toString()
-      }
+      params: { followerId: currentUserId.toString(), followedId: followedUserId.toString() }
     });
   }
 
   unfollowUser(followedUserId: number): Observable<any> {
     const currentUserId = this.getCurrentUserId();
     return this.http.post(`${this.followerApiUrl}/unfollow`, null, {
-      params: {
-        followerId: currentUserId.toString(),
-        followedId: followedUserId.toString()
-      }
+      params: { followerId: currentUserId.toString(), followedId: followedUserId.toString() }
     });
   }
 
   isFollowing(followedUserId: number): Observable<boolean> {
     const currentUserId = this.getCurrentUserId();
     return this.http.get<boolean>(`${this.followerApiUrl}/isFollowing`, {
-      params: {
-        followerId: currentUserId.toString(),
-        followedId: followedUserId.toString()
-      }
+      params: { followerId: currentUserId.toString(), followedId: followedUserId.toString() }
     });
   }
 
@@ -93,5 +92,9 @@ export class UserService {
     return this.http.get<any>(`${this.activityApiUrl}/feed/${userId}?count=${count}`).pipe(
       map(res => this.unwrapArray<Activity>(res))
     );
+  }
+
+  getProfilePictureUrl(userId: number): string {
+    return `${this.userApiUrl}/${userId}/profile-picture`;
   }
 }

@@ -15,7 +15,6 @@ export class SongService {
 
   constructor(private http: HttpClient) { }
 
-  // Helper to unwrap .NET ReferenceHandler.Preserve arrays
   private unwrapArray<T>(value: any): T[] {
     if (!value) return [];
     if (Array.isArray(value)) return value as T[];
@@ -26,6 +25,8 @@ export class SongService {
   private normalizeSong(raw: any): Song {
     return {
       ...raw,
+      // FIX: unwrap tags so the edit modal can populate the textbox correctly
+      tags: this.unwrapArray<string>(raw.tags),
       categories: this.unwrapArray(raw.categories),
       comments: this.unwrapArray<Comment>(raw.comments),
       ratings: this.unwrapArray<Rating>(raw.ratings)
@@ -72,7 +73,6 @@ export class SongService {
     return this.http.post<Song>(`${this.apiUrl}/upload`, formData);
   }
 
-  // UPDATED: send multipart/form-data to match backend [Consumes("multipart/form-data")]
   updateSong(id: number, form: FormData): Observable<Song> {
     return this.http.put<any>(`${this.apiUrl}/${id}`, form).pipe(
       map(s => this.normalizeSong(s))
@@ -83,7 +83,6 @@ export class SongService {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 
-  // Comments
   getComments(songId: number) {
     return this.http.get<any>(`${this.commentApiUrl}/song/${songId}`).pipe(
       map(res => this.unwrapArray<Comment>(res))
@@ -94,7 +93,6 @@ export class SongService {
     return this.http.post<Comment>(`${this.commentApiUrl}`, comment);
   }
 
-  // Ratings
   getRatings(songId: number) {
     return this.http.get<any>(`${this.ratingApiUrl}/song/${songId}`).pipe(
       map(res => ({

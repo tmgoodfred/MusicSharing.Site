@@ -10,8 +10,12 @@
          class="p-4 bg-card-background rounded-lg shadow">
       <div class="flex items-center">
         <div class="flex-shrink-0">
-          <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-            {{ getUserInitial(activity.user?.username) }}
+          <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+            <img *ngIf="activity.user?.profilePicturePath"
+                 [src]="'http://192.168.1.217:5000/api/user/' + activity.user?.id + '/profile-picture'"
+                 alt="{{ activity.user?.username }}"
+                 class="w-full h-full object-cover">
+            <span *ngIf="!activity.user?.profilePicturePath">{{ getUserInitial(activity.user?.username) }}</span>
           </div>
         </div>
         <div class="ml-4">
