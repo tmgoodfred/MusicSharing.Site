@@ -21,6 +21,10 @@ export class SongUploadComponent {
   audioPreview = '';
   artworkPreview = '';
 
+  // New: client-side max size (150 MB)
+  readonly MAX_AUDIO_MB = 150;
+  readonly MAX_AUDIO_BYTES = 150 * 1024 * 1024;
+
   constructor(
     private fb: FormBuilder,
     private songService: SongService,
@@ -38,8 +42,19 @@ export class SongUploadComponent {
   onAudioSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length) {
-      this.selectedAudioFile = input.files[0];
-      this.audioPreview = URL.createObjectURL(this.selectedAudioFile);
+      const file = input.files[0];
+
+      if (file.size > this.MAX_AUDIO_BYTES) {
+        this.errorMessage = `Audio file exceeds the ${this.MAX_AUDIO_MB} MB limit.`;
+        this.selectedAudioFile = null;
+        this.audioPreview = '';
+        input.value = '';
+        return;
+      }
+
+      this.errorMessage = '';
+      this.selectedAudioFile = file;
+      this.audioPreview = URL.createObjectURL(file);
     }
   }
 
@@ -54,12 +69,17 @@ export class SongUploadComponent {
   onSubmit(): void {
     if (this.uploadForm.invalid || !this.selectedAudioFile || this.isSubmitting) return;
 
+    // Defensive check before submit
+    if (this.selectedAudioFile.size > this.MAX_AUDIO_BYTES) {
+      this.errorMessage = `Audio file exceeds the ${this.MAX_AUDIO_MB} MB limit.`;
+      return;
+    }
+
     this.isSubmitting = true;
     this.errorMessage = '';
 
     const formData = new FormData();
 
-    // Backend expects these exact form keys (case-insensitive, but align for clarity)
     formData.append('File', this.selectedAudioFile);
 
     if (this.selectedArtworkFile) {
