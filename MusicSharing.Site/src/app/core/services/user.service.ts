@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { User, Activity, Song } from '../models/models';
+import { User, Activity, Song, Analytics } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
@@ -108,4 +108,9 @@ export class UserService {
   updateUserPassword(id: number, newPassword: string): Observable<void> {
     return this.http.put<void>(`${this.userApiUrl}/${id}/password`, { newPassword });
   }
+
+  getUserAnalytics(userId: number): Observable<Analytics> {
+    return this.http.get<Analytics>(`${this.userApiUrl}/${userId}/analytics`);
+  }
+
 }

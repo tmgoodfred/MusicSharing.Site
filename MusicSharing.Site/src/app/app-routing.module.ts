@@ -28,6 +28,10 @@ const routes: Routes = [
     path: 'profile',
     loadChildren: () => import('./features/profile/profile.module').then(m => m.ProfileModule)
   },
+  {
+    path: 'analytics',
+    loadChildren: () => import('./features/analytics/analytics.module').then(m => m.AnalyticsModule)
+  },
   { path: '**', redirectTo: '' }
 ];
 

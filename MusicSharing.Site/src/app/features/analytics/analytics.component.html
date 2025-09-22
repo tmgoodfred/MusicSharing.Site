@@ -1,0 +1,22 @@
+<div class="container mx-auto p-6">
+  <h2 class="text-2xl font-bold mb-4">Your Analytics</h2>
+
+  <div *ngIf="analytics; else loading">
+    <ul class="space-y-2">
+      <li><strong>Total Songs:</strong> {{ analytics.totalSongs }}</li>
+      <li><strong>Total Plays:</strong> {{ analytics.totalPlays }}</li>
+      <li><strong>Total Downloads:</strong> {{ analytics.totalDownloads }}</li>
+      <li><strong>Average Rating:</strong> {{ analytics.averageRating | number:'1.1-2' }}</li>
+      <li *ngIf="analytics.mostPopularSongTitle">
+        <strong>Most Popular:</strong> {{ analytics.mostPopularSongTitle }} ({{ analytics.mostPopularSongPlays }} plays)
+      </li>
+      <li *ngIf="analytics.mostRecentSongTitle">
+        <strong>Most Recent:</strong> {{ analytics.mostRecentSongTitle }} ({{ analytics.mostRecentUploadDate | date:'medium' }})
+      </li>
+    </ul>
+  </div>
+
+  <ng-template #loading>
+    <p>Loading analytics...</p>
+  </ng-template>
+</div>

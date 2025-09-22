@@ -1,0 +1,50 @@
+/* Ensure contrast in dark mode for the playlist header */
+@media (prefers-color-scheme: dark) {
+  .playlist-header {
+    background-color: #1f2937;
+    color: #f3f4f6;
+  }
+
+    .playlist-header h1 {
+      color: #f9fafb;
+    }
+
+    .playlist-header p {
+      color: #d1d5db;
+    }
+}
+
+/* Remove previous hover color overrides */
+
+/* Use background color for hover, not text color */
+.song-row {
+  transition: background 0.15s;
+}
+
+  .song-row:hover {
+    background: #f9fafb !important; /* white in light mode */
+  }
+
+@media (prefers-color-scheme: dark) {
+  .song-row:hover {
+    background: #23272e !important; /* slightly lighter than table bg in dark mode */
+  }
+}
+
+/* Force text color for all cells and children in light mode */
+.song-row,
+.song-row td,
+.song-row td *,
+.song-row a {
+  color: #111 !important; /* black for all text in light mode */
+}
+
+/* In dark mode, keep text light */
+@media (prefers-color-scheme: dark) {
+  .song-row,
+  .song-row td,
+  .song-row td *,
+  .song-row a {
+    color: #e5e7eb !important; /* gray-200 */
+  }
+}

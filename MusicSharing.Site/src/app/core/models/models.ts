@@ -89,6 +89,20 @@ export interface Activity {
   user?: User
 }
 
+export interface Analytics {
+  id: number;
+  totalSongs: number;
+  totalPlays: number;
+  averageRating: number;
+  totalDownloads: number;
+  mostPopularSongTitle: string;
+  mostPopularSongId: number;
+  mostPopularSongPlays: number;
+  mostRecentSongTitle: string;
+  mostRecentSongId: number;
+  mostRecentUploadDate: string;
+}
+
 export interface Follower {
   id: number;
   followerUserId: number;
