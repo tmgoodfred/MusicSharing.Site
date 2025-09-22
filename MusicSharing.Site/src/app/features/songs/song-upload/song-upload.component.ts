@@ -31,7 +31,7 @@ export class SongUploadComponent {
       title: ['', Validators.required],
       artist: ['', Validators.required],
       genre: [''],
-      tags: [''] // Will be split by comma in onSubmit
+      tags: [''] // comma-separated
     });
   }
 
@@ -39,7 +39,6 @@ export class SongUploadComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length) {
       this.selectedAudioFile = input.files[0];
-      // Create a URL for preview
       this.audioPreview = URL.createObjectURL(this.selectedAudioFile);
     }
   }
@@ -48,50 +47,45 @@ export class SongUploadComponent {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length) {
       this.selectedArtworkFile = input.files[0];
-      // Create a URL for preview
       this.artworkPreview = URL.createObjectURL(this.selectedArtworkFile);
     }
   }
 
   onSubmit(): void {
-    if (this.uploadForm.invalid || !this.selectedAudioFile || this.isSubmitting) {
-      return;
-    }
+    if (this.uploadForm.invalid || !this.selectedAudioFile || this.isSubmitting) return;
 
     this.isSubmitting = true;
     this.errorMessage = '';
 
     const formData = new FormData();
-    formData.append('file', this.selectedAudioFile);
+
+    // Backend expects these exact form keys (case-insensitive, but align for clarity)
+    formData.append('File', this.selectedAudioFile);
 
     if (this.selectedArtworkFile) {
-      formData.append('artwork', this.selectedArtworkFile);
+      formData.append('Artwork', this.selectedArtworkFile);
     }
 
-    formData.append('title', this.uploadForm.get('title')?.value);
-    formData.append('artist', this.uploadForm.get('artist')?.value);
+    formData.append('Title', this.uploadForm.get('title')!.value);
+    formData.append('Artist', this.uploadForm.get('artist')!.value);
 
-    const genre = this.uploadForm.get('genre')?.value;
-    if (genre) {
-      formData.append('genre', genre);
-    }
+    const genre = this.uploadForm.get('genre')!.value;
+    if (genre) formData.append('Genre', genre);
 
-    const tagsString = this.uploadForm.get('tags')?.value;
+    const tagsString = this.uploadForm.get('tags')!.value as string;
     if (tagsString) {
-      const tags = tagsString.split(',').map((tag: string) => tag.trim());
-      tags.forEach((tag: string, index: number) => {
-        formData.append(`tags[${index}]`, tag);
-      });
+      tagsString
+        .split(',')
+        .map(t => t.trim())
+        .filter(t => t.length > 0)
+        .forEach(tag => formData.append('Tags', tag)); // repeat 'Tags' for each value
     }
 
-    // Get the current user ID and add it to the form data
     const userId = this.getCurrentUserId();
-    formData.append('userId', userId.toString());
+    formData.append('UserId', userId.toString());
 
     this.songService.uploadSong(formData).subscribe({
-      next: (song) => {
-        this.router.navigate(['/songs', song.id]);
-      },
+      next: (song) => this.router.navigate(['/songs', song.id]),
       error: (error) => {
         this.isSubmitting = false;
         this.errorMessage = error?.error?.error || 'Upload failed. Please try again.';
@@ -102,11 +96,10 @@ export class SongUploadComponent {
   private getCurrentUserId(): number {
     const userId = this.tokenStorage.getUserId();
     if (!userId) {
-      // Handle the case where there's no user ID
       this.errorMessage = 'You must be logged in to upload songs.';
       this.isSubmitting = false;
       throw new Error('No user ID found');
     }
-    return parseInt(userId);
+    return parseInt(userId, 10);
   }
 }

@@ -26,6 +26,12 @@ export class SongDetailComponent implements OnInit {
   commentForm: FormGroup;
   isSubmittingComment = false;
 
+  // Owner edit modal
+  isOwner = false;
+  showEditModal = false;
+  editSongForm: FormGroup;
+  selectedArtworkFile: File | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -39,13 +45,25 @@ export class SongDetailComponent implements OnInit {
       isAnonymous: [false]
     });
 
+    this.editSongForm = this.fb.group({
+      title: ['', [Validators.required, Validators.maxLength(200)]],
+      artist: ['', [Validators.required, Validators.maxLength(200)]],
+      genre: [''],
+      tagsText: [''] // comma-separated tags
+    });
+
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      this.updateIsOwner();
     });
   }
 
   ngOnInit(): void {
     this.loadSong();
+  }
+
+  private updateIsOwner(): void {
+    this.isOwner = !!(this.currentUser && this.song && this.song.userId === this.currentUser.id);
   }
 
   loadSong(): void {
@@ -60,6 +78,7 @@ export class SongDetailComponent implements OnInit {
       next: (song) => {
         this.song = song;
         this.isLoading = false;
+        this.updateIsOwner();
         this.loadComments();
         this.loadRatings();
       },
@@ -159,6 +178,60 @@ export class SongDetailComponent implements OnInit {
     this.songService.addOrUpdateRating(ratingObj).subscribe({
       next: () => {
         this.loadRatings();
+      }
+    });
+  }
+
+  // Edit modal handlers
+  openEditModal(): void {
+    if (!this.song) return;
+    this.editSongForm.reset({
+      title: this.song.title || '',
+      artist: this.song.artist || '',
+      genre: this.song.genre || '',
+      tagsText: (this.song.tags && this.song.tags.length > 0) ? this.song.tags.join(', ') : ''
+    });
+    this.selectedArtworkFile = null;
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+    this.selectedArtworkFile = null;
+  }
+
+  onArtworkSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.selectedArtworkFile = (input.files && input.files.length > 0) ? input.files[0] : null;
+  }
+
+  submitSongUpdate(): void {
+    if (!this.song || this.editSongForm.invalid) return;
+
+    const tagsText: string = this.editSongForm.value.tagsText || '';
+    const tagsCsv = tagsText
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0)
+      .join(',');
+
+    const form = new FormData();
+    form.append('title', this.editSongForm.value.title);
+    form.append('artist', this.editSongForm.value.artist);
+    form.append('genre', this.editSongForm.value.genre || '');
+    form.append('tags', tagsCsv);
+    if (this.selectedArtworkFile) {
+      form.append('artwork', this.selectedArtworkFile);
+    }
+
+    this.songService.updateSong(this.song.id, form).subscribe({
+      next: (updated) => {
+        this.song = { ...this.song!, ...updated };
+        this.closeEditModal();
+      },
+      error: (err) => {
+        console.error('Failed to update song:', err);
+        alert('Failed to update song. Please try again.');
       }
     });
   }

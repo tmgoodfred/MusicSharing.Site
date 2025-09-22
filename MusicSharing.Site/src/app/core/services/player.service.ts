@@ -109,8 +109,47 @@ export class PlayerService {
     }
   }
 
+  playAtIndex(index: number) {
+    const { queue } = this.state.value;
+    if (index < 0 || index >= queue.length) return;
+    this.play(queue[index]);
+  }
+
   addToQueue(song: Song) {
     const queue = [...this.state.value.queue, song];
+    this.updateState({ queue });
+  }
+
+  removeFromQueue(index: number) {
+    const queue = [...this.state.value.queue];
+    if (index < 0 || index >= queue.length) return;
+
+    const [removed] = queue.splice(index, 1);
+    const current = this.state.value.currentSong;
+
+    this.updateState({ queue });
+
+    if (current && removed && current.id === removed.id) {
+      // If we removed the currently playing song, try to play the next one at same index
+      if (queue[index]) {
+        this.play(queue[index]);
+      } else if (queue.length > 0) {
+        this.play(queue[queue.length - 1]);
+      } else {
+        // No songs left
+        if (this.sound) this.sound.stop();
+      }
+    }
+  }
+
+  moveInQueue(previousIndex: number, currentIndex: number) {
+    const queue = [...this.state.value.queue];
+    if (previousIndex === currentIndex) return;
+    if (previousIndex < 0 || previousIndex >= queue.length) return;
+    if (currentIndex < 0 || currentIndex > queue.length) return;
+
+    const [moved] = queue.splice(previousIndex, 1);
+    queue.splice(currentIndex, 0, moved);
     this.updateState({ queue });
   }
 

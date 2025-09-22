@@ -72,8 +72,11 @@ export class SongService {
     return this.http.post<Song>(`${this.apiUrl}/upload`, formData);
   }
 
-  updateSong(id: number, song: Partial<Song>): Observable<Song> {
-    return this.http.put<Song>(`${this.apiUrl}/${id}`, song);
+  // UPDATED: send multipart/form-data to match backend [Consumes("multipart/form-data")]
+  updateSong(id: number, form: FormData): Observable<Song> {
+    return this.http.put<any>(`${this.apiUrl}/${id}`, form).pipe(
+      map(s => this.normalizeSong(s))
+    );
   }
 
   deleteSong(id: number): Observable<any> {

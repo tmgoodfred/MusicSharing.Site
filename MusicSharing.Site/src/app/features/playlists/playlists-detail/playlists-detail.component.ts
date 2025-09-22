@@ -96,23 +96,26 @@ export class PlaylistsDetailComponent implements OnInit {
         });
     }
 
-    deletePlaylist(): void {
-        if (!this.playlist || !this.isOwner) return;
+  // Update your delete handler to pass the required userId
+  deletePlaylist(): void {
+    if (!this.playlist) return;
 
-        if (!confirm('Are you sure you want to delete this playlist? This action cannot be undone.')) {
-            return;
-        }
-
-        this.playlistService.deletePlaylist(this.playlist.id).subscribe({
-            next: () => {
-                this.router.navigate(['/playlists']);
-            },
-            error: (err) => {
-                console.error('Error deleting playlist:', err);
-                alert('Failed to delete playlist. Please try again.');
-            }
-        });
+    // Get current userId (use your AuthService if you already have it here)
+    const userIdStr = localStorage.getItem('userId');
+    const userId = userIdStr ? parseInt(userIdStr, 10) : 0;
+    if (!userId) {
+      alert('You must be logged in to delete a playlist.');
+      return;
     }
+
+    this.playlistService.deletePlaylist(this.playlist.id, userId).subscribe({
+      next: () => this.router.navigate(['/playlists']),
+      error: (err) => {
+        console.error('Error deleting playlist:', err);
+        alert('Failed to delete playlist. Please try again.');
+      }
+    });
+  }
 
     formatDuration(seconds: number): string {
         const minutes = Math.floor(seconds / 60);

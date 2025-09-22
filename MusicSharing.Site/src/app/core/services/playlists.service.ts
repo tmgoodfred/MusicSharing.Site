@@ -1,45 +1,74 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, switchMap } from 'rxjs';
 import { Playlist, Song } from '../models/models';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class PlaylistService {
-    private apiUrl = 'http://192.168.1.217:5000/api/playlists';
+  // Match backend controller route (singular)
+  private apiUrl = 'http://192.168.1.217:5000/api/playlist';
 
-    constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) { }
 
-    getAllPlaylists(): Observable<Playlist[]> {
-        return this.http.get<Playlist[]>(this.apiUrl);
-    }
+  // Unwrap .NET $values arrays
+  private unwrapArray<T>(value: any): T[] {
+    if (!value) return [];
+    if (Array.isArray(value)) return value as T[];
+    if (value.$values) return value.$values as T[];
+    return value as T[];
+  }
 
-    getUserPlaylists(userId: number): Observable<Playlist[]> {
-        return this.http.get<Playlist[]>(`${this.apiUrl}/user/${userId}`);
-    }
+  private normalizeSong(raw: any): Song {
+    return { ...raw } as Song;
+  }
 
-    getPlaylistById(id: number): Observable<Playlist> {
-        return this.http.get<Playlist>(`${this.apiUrl}/${id}`);
-    }
+  private normalizePlaylist(raw: any): Playlist {
+    const songs = this.unwrapArray<any>(raw.songs).map(s => this.normalizeSong(s));
+    return { ...raw, songs } as Playlist;
+  }
 
-    createPlaylist(playlist: Partial<Playlist>): Observable<Playlist> {
-        return this.http.post<Playlist>(this.apiUrl, playlist);
-    }
+  getAllPlaylists(): Observable<Playlist[]> {
+    return this.http.get<any>(this.apiUrl).pipe(
+      map(res => this.unwrapArray<any>(res).map(p => this.normalizePlaylist(p)))
+    );
+  }
 
-    updatePlaylist(id: number, playlist: Partial<Playlist>): Observable<Playlist> {
-        return this.http.put<Playlist>(`${this.apiUrl}/${id}`, playlist);
-    }
+  // Client-side filter for current user's playlists
+  getUserPlaylists(userId: number): Observable<Playlist[]> {
+    return this.getAllPlaylists().pipe(map(list => list.filter(p => p.userId === userId)));
+  }
 
-    deletePlaylist(id: number): Observable<any> {
-        return this.http.delete(`${this.apiUrl}/${id}`);
-    }
+  getPlaylistById(id: number): Observable<Playlist> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`).pipe(
+      map(p => this.normalizePlaylist(p))
+    );
+  }
 
-    addSongToPlaylist(playlistId: number, songId: number): Observable<Playlist> {
-        return this.http.post<Playlist>(`${this.apiUrl}/${playlistId}/songs/${songId}`, {});
-    }
+  createPlaylist(playlist: Partial<Playlist>): Observable<Playlist> {
+    return this.http.post<Playlist>(this.apiUrl, playlist);
+  }
 
-    removeSongFromPlaylist(playlistId: number, songId: number): Observable<Playlist> {
-        return this.http.delete<Playlist>(`${this.apiUrl}/${playlistId}/songs/${songId}`);
-    }
+  updatePlaylist(id: number, playlist: Partial<Playlist>): Observable<Playlist> {
+    return this.http.put<Playlist>(`${this.apiUrl}/${id}`, playlist);
+  }
+
+  // Backend requires userId as query param
+  deletePlaylist(id: number, userId: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { params: { userId: userId.toString() } });
+  }
+
+  // Return updated playlist after add/remove so components can assign it
+  addSongToPlaylist(playlistId: number, songId: number): Observable<Playlist> {
+    return this.http.post<void>(`${this.apiUrl}/${playlistId}/songs/${songId}`, {}).pipe(
+      switchMap(() => this.getPlaylistById(playlistId))
+    );
+  }
+
+  removeSongFromPlaylist(playlistId: number, songId: number): Observable<Playlist> {
+    return this.http.delete<void>(`${this.apiUrl}/${playlistId}/songs/${songId}`).pipe(
+      switchMap(() => this.getPlaylistById(playlistId))
+    );
+  }
 }

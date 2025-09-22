@@ -28,6 +28,9 @@ export class PlaylistsListComponent implements OnInit {
       this.currentUser = user;
       if (user) {
         this.loadUserPlaylists(user.id);
+      } else {
+        this.isLoading = false;
+        this.playlists = [];
       }
     });
   }
@@ -51,11 +54,16 @@ export class PlaylistsListComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
+    if (!this.currentUser) {
+      alert('You must be logged in to delete a playlist.');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this playlist? This action cannot be undone.')) {
       return;
     }
 
-    this.playlistService.deletePlaylist(id).subscribe({
+    this.playlistService.deletePlaylist(id, this.currentUser.id).subscribe({
       next: () => {
         this.playlists = this.playlists.filter(playlist => playlist.id !== id);
       },
