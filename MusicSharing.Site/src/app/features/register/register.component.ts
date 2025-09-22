@@ -16,6 +16,10 @@ export class RegisterComponent {
   isSubmitting = false;
   errorMessage = '';
 
+  // Profile picture selection
+  selectedProfilePicture: File | null = null;
+  profilePreview = '';
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -35,6 +39,14 @@ export class RegisterComponent {
     return password === confirmPassword ? null : { passwordMismatch: true };
   }
 
+  onProfilePictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length) {
+      this.selectedProfilePicture = input.files[0];
+      this.profilePreview = URL.createObjectURL(this.selectedProfilePicture);
+    }
+  }
+
   onSubmit(): void {
     if (this.registerForm.invalid || this.isSubmitting) {
       return;
@@ -45,12 +57,12 @@ export class RegisterComponent {
 
     const { username, email, password } = this.registerForm.value;
 
-    this.authService.register(username, email, password).subscribe({
+    this.authService.register(username, email, password, this.selectedProfilePicture).subscribe({
       next: () => {
-        // After registration, login the user
+        // Auto-login after registration
         this.authService.login(email, password).subscribe({
           next: () => this.router.navigate(['/']),
-          error: error => {
+          error: () => {
             this.isSubmitting = false;
             this.errorMessage = 'Registration successful but login failed. Please login manually.';
           }

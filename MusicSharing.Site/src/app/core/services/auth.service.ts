@@ -42,8 +42,19 @@ export class AuthService {
       );
   }
 
-  register(username: string, email: string, password: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}`, { username, email, password });
+  // UPDATED: register with multipart/form-data (supports profile picture)
+  register(username: string, email: string, password: string, profilePicture?: File | null): Observable<any> {
+    const form = new FormData();
+    form.append('username', username);
+    form.append('email', email);
+    // Backend expects "passwordHash" (it hashes server-side)
+    form.append('passwordHash', password);
+    // Role required by endpoint; default to "User"
+    form.append('role', 'User');
+    if (profilePicture) {
+      form.append('profilePicture', profilePicture);
+    }
+    return this.http.post(`${this.apiUrl}`, form);
   }
 
   logout(): void {
@@ -78,10 +89,8 @@ export class AuthService {
         return;
       }
 
-      // Save the userId in storage
       this.tokenStorage.saveUserId(userId.toString());
 
-      // Fetch the full user profile
       this.http.get<User>(`${this.userUrl}/${userId}`).pipe(
         tap(user => {
           this.currentUserSubject.next(user);
