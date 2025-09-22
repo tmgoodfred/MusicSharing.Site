@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, switchMap } from 'rxjs/operators';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PlayerService } from '../../core/services/player.service';
-import { User, Song, Activity, UserRole, Rating } from '../../core/models/models';
+import { User, Song, Activity, Rating } from '../../core/models/models';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -26,7 +26,7 @@ export class ProfileComponent implements OnInit {
   followers: User[] = [];
   following: User[] = [];
   isFollowing = false;
-  activeTab = 'songs'; // 'songs', 'activity', 'followers', 'following'
+  activeTab = 'songs';
 
   constructor(
     private route: ActivatedRoute,
@@ -36,29 +36,21 @@ export class ProfileComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // Subscribe to current user
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
 
-    // Load profile data
     this.route.paramMap.pipe(
       switchMap(params => {
         const userId = params.get('id');
-
-        // If no ID provided, show current user's profile
         if (!userId && this.currentUser) {
           this.isOwnProfile = true;
           return this.loadUserData(this.currentUser.id);
-        }
-        // Otherwise load the requested user's profile
-        else if (userId) {
+        } else if (userId) {
           const id = parseInt(userId);
           this.isOwnProfile = this.currentUser?.id === id;
           return this.loadUserData(id);
         }
-
-        // Fallback if there's no current user or ID
         return of(null);
       })
     ).subscribe({
@@ -81,16 +73,6 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  calculateAverageRating(ratings: Rating[] | undefined): string {
-    if (!ratings || ratings.length === 0) {
-      return 'No ratings';
-    }
-
-    const sum = ratings.reduce((acc, rating) => acc + rating.ratingValue, 0);
-    const average = sum / ratings.length;
-    return average.toFixed(1);
-  }
-
   loadUserData(userId: number) {
     return forkJoin({
       user: this.userService.getUserById(userId),
@@ -102,6 +84,17 @@ export class ProfileComponent implements OnInit {
         ? this.userService.isFollowing(userId).pipe(catchError(() => of(false)))
         : of(false)
     });
+  }
+
+  // Defensive: handle both plain arrays and $values-wrapped collections
+  calculateAverageRating(ratings: Rating[] | any): string {
+    const list: Rating[] = Array.isArray(ratings) ? ratings : (ratings?.$values ?? []);
+    if (!list || list.length === 0) {
+      return 'No ratings';
+    }
+    const sum = list.reduce((acc, r) => acc + (r?.ratingValue ?? 0), 0);
+    const average = sum / list.length;
+    return average.toFixed(1);
   }
 
   setActiveTab(tab: string): void {
@@ -123,7 +116,6 @@ export class ProfileComponent implements OnInit {
     this.userService.followUser(this.profileUser.id).subscribe({
       next: () => {
         this.isFollowing = true;
-        // Add current user to followers
         if (this.currentUser) {
           this.followers = [...this.followers, this.currentUser];
         }
@@ -138,7 +130,6 @@ export class ProfileComponent implements OnInit {
     this.userService.unfollowUser(this.profileUser.id).subscribe({
       next: () => {
         this.isFollowing = false;
-        // Remove current user from followers
         if (this.currentUser) {
           this.followers = this.followers.filter(f => f.id !== this.currentUser?.id);
         }
@@ -154,16 +145,11 @@ export class ProfileComponent implements OnInit {
 
   formatActivityType(activity: Activity): string {
     switch (activity.type) {
-      case 'Upload':
-        return 'uploaded a song';
-      case 'Comment':
-        return 'commented on a song';
-      case 'Rating':
-        return 'rated a song';
-      case 'Follow':
-        return 'followed a user';
-      default:
-        return activity.type;
+      case 'Upload': return 'uploaded a song';
+      case 'Comment': return 'commented on a song';
+      case 'Rating': return 'rated a song';
+      case 'Follow': return 'followed a user';
+      default: return activity.type;
     }
   }
 }

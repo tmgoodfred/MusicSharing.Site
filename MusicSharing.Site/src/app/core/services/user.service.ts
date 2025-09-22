@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { User, Activity, Song, Follower, UserUpdate } from '../models/models';
+import { User, Activity, Song } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
@@ -21,11 +21,22 @@ export class UserService {
     return value as T[];
   }
 
+  // Normalize nested song collections coming from ReferenceHandler.Preserve
+  private normalizeSong(raw: any): Song {
+    return {
+      ...raw,
+      tags: this.unwrapArray<string>(raw?.tags),
+      ratings: this.unwrapArray<any>(raw?.ratings),
+      comments: this.unwrapArray<any>(raw?.comments),
+      categories: this.unwrapArray<any>(raw?.categories)
+    } as Song;
+  }
+
   getUserById(id: number): Observable<User> {
     return this.http.get<User>(`${this.userApiUrl}/${id}`);
   }
 
-  updateUser(id: number, userData: UserUpdate): Observable<User> {
+  updateUser(id: number, userData: any): Observable<User> {
     return this.http.put<User>(`${this.userApiUrl}/${id}`, userData);
   }
 
@@ -33,14 +44,9 @@ export class UserService {
     return this.http.put<User>(`${this.userApiUrl}/${id}`, form);
   }
 
-  // NEW: change password endpoint (JSON)
-  updateUserPassword(id: number, newPassword: string): Observable<void> {
-    return this.http.put<void>(`${this.userApiUrl}/${id}/password`, { newPassword });
-  }
-
   getUserSongs(userId: number): Observable<Song[]> {
     return this.http.get<any>(`${this.musicApiUrl}/user/${userId}/songs`).pipe(
-      map(res => this.unwrapArray<Song>(res))
+      map(res => this.unwrapArray<any>(res).map(s => this.normalizeSong(s)))
     );
   }
 
@@ -96,5 +102,10 @@ export class UserService {
 
   getProfilePictureUrl(userId: number): string {
     return `${this.userApiUrl}/${userId}/profile-picture`;
+  }
+
+  // NEW: change password endpoint (JSON)
+  updateUserPassword(id: number, newPassword: string): Observable<void> {
+    return this.http.put<void>(`${this.userApiUrl}/${id}/password`, { newPassword });
   }
 }
