@@ -25,7 +25,6 @@ export class SongService {
   private normalizeSong(raw: any): Song {
     return {
       ...raw,
-      // FIX: unwrap tags so the edit modal can populate the textbox correctly
       tags: this.unwrapArray<string>(raw.tags),
       categories: this.unwrapArray(raw.categories),
       comments: this.unwrapArray<Comment>(raw.comments),
@@ -79,8 +78,10 @@ export class SongService {
     );
   }
 
-  deleteSong(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  // UPDATED: pass userId as query parameter
+  deleteSong(id: number, userId: number): Observable<any> {
+    const params = new HttpParams().set('userId', userId.toString());
+    return this.http.delete(`${this.apiUrl}/${id}`, { params });
   }
 
   getComments(songId: number) {

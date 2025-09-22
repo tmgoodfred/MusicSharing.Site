@@ -32,6 +32,9 @@ export class SongDetailComponent implements OnInit {
   editSongForm: FormGroup;
   selectedArtworkFile: File | null = null;
 
+  // Deletion state
+  isDeleting = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -49,7 +52,7 @@ export class SongDetailComponent implements OnInit {
       title: ['', [Validators.required, Validators.maxLength(200)]],
       artist: ['', [Validators.required, Validators.maxLength(200)]],
       genre: [''],
-      tagsText: [''] // comma-separated tags
+      tagsText: ['']
     });
 
     this.authService.currentUser$.subscribe(user => {
@@ -116,15 +119,11 @@ export class SongDetailComponent implements OnInit {
   }
 
   playSong(): void {
-    if (this.song) {
-      this.playerService.play(this.song);
-    }
+    if (this.song) this.playerService.play(this.song);
   }
 
   addToQueue(): void {
-    if (this.song) {
-      this.playerService.addToQueue(this.song);
-    }
+    if (this.song) this.playerService.addToQueue(this.song);
   }
 
   downloadSong(): void {
@@ -134,9 +133,7 @@ export class SongDetailComponent implements OnInit {
   }
 
   submitComment(): void {
-    if (this.commentForm.invalid || !this.song || this.isSubmittingComment || !this.currentUser) {
-      return;
-    }
+    if (this.commentForm.invalid || !this.song || this.isSubmittingComment || !this.currentUser) return;
 
     this.isSubmittingComment = true;
 
@@ -150,39 +147,25 @@ export class SongDetailComponent implements OnInit {
     this.songService.addComment(comment).subscribe({
       next: () => {
         this.loadComments();
-        this.commentForm.reset({
-          commentText: '',
-          isAnonymous: false
-        });
+        this.commentForm.reset({ commentText: '', isAnonymous: false });
         this.isSubmittingComment = false;
       },
-      error: () => {
-        this.isSubmittingComment = false;
-      }
+      error: () => { this.isSubmittingComment = false; }
     });
   }
 
   setRating(rating: number): void {
-    if (!this.currentUser || !this.song) {
-      return;
-    }
+    if (!this.currentUser || !this.song) return;
 
     this.userRating = rating;
 
-    const ratingObj = {
+    this.songService.addOrUpdateRating({
       songId: this.song.id,
       userId: this.currentUser.id,
       ratingValue: rating
-    };
-
-    this.songService.addOrUpdateRating(ratingObj).subscribe({
-      next: () => {
-        this.loadRatings();
-      }
-    });
+    }).subscribe({ next: () => this.loadRatings() });
   }
 
-  // Edit modal handlers
   openEditModal(): void {
     if (!this.song) return;
     this.editSongForm.reset({
@@ -208,11 +191,10 @@ export class SongDetailComponent implements OnInit {
   submitSongUpdate(): void {
     if (!this.song || this.editSongForm.invalid) return;
 
-    const tagsText: string = this.editSongForm.value.tagsText || '';
-    const tagsCsv = tagsText
+    const tagsCsv = (this.editSongForm.value.tagsText || '')
       .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0)
+      .map((t: string) => t.trim())
+      .filter((t: string) => t.length > 0)
       .join(',');
 
     const form = new FormData();
@@ -220,9 +202,7 @@ export class SongDetailComponent implements OnInit {
     form.append('artist', this.editSongForm.value.artist);
     form.append('genre', this.editSongForm.value.genre || '');
     form.append('tags', tagsCsv);
-    if (this.selectedArtworkFile) {
-      form.append('artwork', this.selectedArtworkFile);
-    }
+    if (this.selectedArtworkFile) form.append('artwork', this.selectedArtworkFile);
 
     this.songService.updateSong(this.song.id, form).subscribe({
       next: (updated) => {
@@ -236,15 +216,32 @@ export class SongDetailComponent implements OnInit {
     });
   }
 
+  // Delete handlers (pass userId as query parameter)
+  confirmDelete(): void {
+    if (!this.song || this.isDeleting || !this.currentUser) return;
+    if (!confirm('Are you sure you want to delete this song? This action cannot be undone.')) return;
+
+    this.isDeleting = true;
+    this.songService.deleteSong(this.song.id, this.currentUser.id).subscribe({
+      next: () => {
+        this.isDeleting = false;
+        this.router.navigate(['/songs']);
+      },
+      error: (err) => {
+        this.isDeleting = false;
+        console.error('Failed to delete song:', err);
+        alert('Failed to delete song. Please try again.');
+      }
+    });
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
   }
 
   getCommentAuthor(comment: Comment): string {
-    if (comment.isAnonymous) {
-      return 'Anonymous';
-    }
+    if (comment.isAnonymous) return 'Anonymous';
     return comment.user?.username || 'Unknown';
   }
 }
