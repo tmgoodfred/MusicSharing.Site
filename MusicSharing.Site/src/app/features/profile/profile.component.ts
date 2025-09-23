@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, switchMap, map } from 'rxjs/operators';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PlayerService } from '../../core/services/player.service';
@@ -97,11 +97,64 @@ export class ProfileComponent implements OnInit {
     return this.userService.getProfilePictureUrl(userId);
   }
 
+  // Add this method to check if a comment is anonymous
+  isAnonymousComment(activity: Activity): boolean {
+    if (activity.type !== 'Comment') return false;
+
+    const obj = this.parseActivityData(activity.data);
+    return obj?.isAnonymous === true || obj?.IsAnonymous === true;
+  }
+
   loadUserData(userId: number) {
     return forkJoin({
       user: this.userService.getUserById(userId),
       songs: this.userService.getUserSongs(userId).pipe(catchError(() => of([]))),
-      activities: this.userService.getUserActivity(userId).pipe(catchError(() => of([]))),
+      activities: this.userService.getUserActivity(userId).pipe(
+        // Ensure anonymous comments are filtered out for non-owners by resolving the actual comment first
+        switchMap(activities => {
+          if (!activities || activities.length === 0) return of([] as Activity[]);
+
+          // Owner can see all of their activities, including anonymous comments
+          if (this.isOwnProfile) return of(activities);
+
+          const enrich$ = activities.map(a => {
+            if (a.type !== 'Comment') {
+              return of({ activity: a, isAnonymous: false });
+            }
+
+            const parsed = this.parseCommentActivityData(a.data);
+            if (!parsed) {
+              // If we cannot resolve the comment, assume not anonymous to avoid over-hiding legitimate items
+              return of({ activity: a, isAnonymous: false });
+            }
+
+            if (parsed.kind === 'song' && parsed.songId && parsed.commentId) {
+              return this.songService.getSongCommentById(parsed.songId, parsed.commentId).pipe(
+                map(c => ({ activity: a, isAnonymous: !!c.isAnonymous })),
+                catchError(() => of({ activity: a, isAnonymous: false }))
+              );
+            }
+            if (parsed.kind === 'blog' && parsed.blogPostId && parsed.commentId) {
+              return this.songService.getBlogCommentById(parsed.blogPostId, parsed.commentId).pipe(
+                map(c => ({ activity: a, isAnonymous: !!c.isAnonymous })),
+                catchError(() => of({ activity: a, isAnonymous: false }))
+              );
+            }
+
+            return of({ activity: a, isAnonymous: false });
+          });
+
+          return forkJoin(enrich$).pipe(
+            map(list =>
+              list
+                // For non-owners, drop anonymous comments
+                .filter(x => x.activity.type !== 'Comment' || !x.isAnonymous)
+                .map(x => x.activity)
+            )
+          );
+        }),
+        catchError(() => of([]))
+      ),
       analytics: this.isOwnProfile
         ? this.userService.getUserAnalytics(userId).pipe(catchError(() => of(null)))
         : of(null),
@@ -177,12 +230,42 @@ export class ProfileComponent implements OnInit {
 
       if (parsed.kind === 'song' && parsed.songId && parsed.commentId) {
         this.songService.getSongCommentById(parsed.songId, parsed.commentId).subscribe({
-          next: c => this.commentTexts[a.id] = c.commentText,
+          next: c => {
+            this.commentTexts[a.id] = c.commentText;
+
+            // Store anonymity info in the activity data if not already present
+            if (a.data && typeof a.data === 'string') {
+              try {
+                const dataObj = JSON.parse(a.data);
+                if (!('isAnonymous' in dataObj) && !('IsAnonymous' in dataObj)) {
+                  dataObj.isAnonymous = c.isAnonymous;
+                  a.data = JSON.stringify(dataObj);
+                }
+              } catch (e) {
+                // If parsing fails, just leave as is
+              }
+            }
+          },
           error: () => this.commentTexts[a.id] = ''
         });
       } else if (parsed.kind === 'blog' && parsed.blogPostId && parsed.commentId) {
         this.songService.getBlogCommentById(parsed.blogPostId, parsed.commentId).subscribe({
-          next: c => this.commentTexts[a.id] = c.commentText,
+          next: c => {
+            this.commentTexts[a.id] = c.commentText;
+
+            // Store anonymity info in the activity data if not already present
+            if (a.data && typeof a.data === 'string') {
+              try {
+                const dataObj = JSON.parse(a.data);
+                if (!('isAnonymous' in dataObj) && !('IsAnonymous' in dataObj)) {
+                  dataObj.isAnonymous = c.isAnonymous;
+                  a.data = JSON.stringify(dataObj);
+                }
+              } catch (e) {
+                // If parsing fails, just leave as is
+              }
+            }
+          },
           error: () => this.commentTexts[a.id] = ''
         });
       }

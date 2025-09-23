@@ -52,7 +52,7 @@
           <!-- 1 song -->
           <div *ngSwitchCase="1" class="w-full h-full">
             <img *ngIf="playlist.songs?.[0]?.artworkPath"
-                 [src]="'http://192.168.1.217:5000/api/music/' + playlist.songs?.[0]?.id + '/artwork'"
+                 [src]="getArtworkUrl(playlist.songs?.[0]?.id)"
                  alt="Album art"
                  class="w-full h-full object-cover">
             <div *ngIf="!playlist.songs?.[0]?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
@@ -65,7 +65,7 @@
           <div *ngSwitchCase="2" class="w-full h-full grid grid-cols-2 grid-rows-1">
             <ng-container *ngFor="let song of (playlist.songs ?? []).slice(0,2)">
               <img *ngIf="song?.artworkPath"
-                   [src]="'http://192.168.1.217:5000/api/music/' + song?.id + '/artwork'"
+                   [src]="getArtworkUrl(song?.id)"
                    alt="Album art"
                    class="w-full h-full object-cover">
               <div *ngIf="!song?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
@@ -80,7 +80,7 @@
             <ng-container *ngFor="let idx of [0,1,2,3]; let i = index">
               <ng-container *ngIf="i < 3">
                 <img *ngIf="playlist.songs?.[i]?.artworkPath"
-                     [src]="'http://192.168.1.217:5000/api/music/' + playlist.songs?.[i]?.id + '/artwork'"
+                     [src]="getArtworkUrl(playlist.songs?.[i]?.id)"
                      alt="Album art"
                      class="w-full h-full object-cover">
                 <div *ngIf="!playlist.songs?.[i]?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
@@ -98,7 +98,7 @@
           <div *ngSwitchDefault class="w-full h-full grid grid-cols-2 grid-rows-2">
             <ng-container *ngFor="let song of (playlist.songs ?? []).slice(0,4)">
               <img *ngIf="song?.artworkPath"
-                   [src]="'http://192.168.1.217:5000/api/music/' + song?.id + '/artwork'"
+                   [src]="getArtworkUrl(song?.id)"
                    alt="Album art"
                    class="w-full h-full object-cover">
               <div *ngIf="!song?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">

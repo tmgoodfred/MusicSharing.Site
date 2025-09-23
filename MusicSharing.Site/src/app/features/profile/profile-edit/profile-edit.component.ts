@@ -121,17 +121,24 @@ export class ProfileEditComponent implements OnInit {
       return;
     }
 
+    // Separate validation for password change if enabled
+    let shouldUpdatePassword = false;
     if (this.changePassword) {
       const newPwd = this.profileForm.value.newPassword?.trim();
       const confirm = this.profileForm.value.confirmPassword?.trim();
+
       if (!newPwd || newPwd.length < 6) {
         this.error = 'New password must be at least 6 characters.';
         return;
       }
+
       if (newPwd !== confirm) {
         this.error = 'New password and confirmation do not match.';
         return;
       }
+
+      // Only set to true if we have a valid password to update
+      shouldUpdatePassword = true;
     }
 
     this.isSubmitting = true;
@@ -148,8 +155,9 @@ export class ProfileEditComponent implements OnInit {
       switchMap((updatedUser) => {
         this.authService.updateCurrentUser(updatedUser);
 
-        if (this.changePassword) {
-          const newPwd = this.profileForm.value.newPassword as string;
+        // Only call updateUserPassword if shouldUpdatePassword is true
+        if (shouldUpdatePassword) {
+          const newPwd = this.profileForm.value.newPassword?.trim();
           return this.userService.updateUserPassword(this.currentUser!.id, newPwd);
         }
         return of(updatedUser);
@@ -157,7 +165,7 @@ export class ProfileEditComponent implements OnInit {
       finalize(() => this.isSubmitting = false)
     ).subscribe({
       next: () => {
-        // Fix the clearImageCache call by providing the correct type
+        // Clear the image cache
         this.imageService.clearImageCache('profile', this.currentUser!.id);
 
         this.router.navigate(['/profile']).then(() => {

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlayerService, PlayerState } from '../../core/services/player.service';
+import { SongService } from '../../core/services/song.service';
 import { Observable, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -16,36 +17,18 @@ export class PlayerComponent implements OnInit, OnDestroy {
   playerState$: Observable<PlayerState>;
   queueOpen = false;
 
-  // Track last playing song id to remove when advancing
-  private lastSongId: number | null = null;
   private sub?: Subscription;
 
-  // When user goes to previous, skip removal once
-  private suppressRemovalOnce = false;
-
-  constructor(private playerService: PlayerService) {
+  constructor(
+    private playerService: PlayerService,
+    private songService: SongService
+  ) {
     this.playerState$ = this.playerService.state$;
   }
 
   ngOnInit(): void {
-    this.sub = this.playerService.state$.subscribe((state) => {
-      const currId = state.currentSong?.id ?? null;
-
-      // If the song changed (next/finished or user jumped), remove the previous one from queue
-      if (this.lastSongId != null && currId !== this.lastSongId) {
-        if (!this.suppressRemovalOnce) {
-          const idx = state.queue.findIndex(s => s.id === this.lastSongId);
-          if (idx !== -1) {
-            this.playerService.removeFromQueue(idx);
-          }
-        } else {
-          // Do not remove when going to previous
-          this.suppressRemovalOnce = false;
-        }
-      }
-
-      this.lastSongId = currId;
-    });
+    // We'll no longer try to manage queue removal from the component
+    // Let the PlayerService handle this entirely
   }
 
   ngOnDestroy(): void {
@@ -57,13 +40,12 @@ export class PlayerComponent implements OnInit, OnDestroy {
   }
 
   playNext(): void {
+    // The HTML will have the button disabled if there's no next track,
+    // but we'll add this check as an extra safeguard
     this.playerService.playNext();
-    // Removal occurs in state subscription when the song actually changes
   }
 
   playPrevious(): void {
-    // Prevent removal when going backward
-    this.suppressRemovalOnce = true;
     this.playerService.playPrevious();
   }
 
@@ -87,7 +69,6 @@ export class PlayerComponent implements OnInit, OnDestroy {
 
   playFromQueue(index: number): void {
     this.playerService.playAtIndex(index);
-    // Previous track removal handled by state subscription
   }
 
   removeFromQueue(index: number): void {
@@ -95,6 +76,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
   }
 
   formatTime(seconds: number): string {
+    if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60) || 0;
     const secs = Math.floor(seconds % 60) || 0;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
@@ -107,5 +89,10 @@ export class PlayerComponent implements OnInit, OnDestroy {
 
   getCurrentDuration(): number {
     return (this.playerService as any)['state'].getValue().duration;
+  }
+
+  // New method to get artwork URL using SongService
+  getArtworkUrl(songId: number): string {
+    return this.songService.getArtworkUrl(songId);
   }
 }

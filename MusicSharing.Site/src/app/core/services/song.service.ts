@@ -193,7 +193,7 @@ export class SongService {
     return this.http.get<Comment>(`${this.commentApiUrl}/blog/${blogPostId}/${commentId}`);
   }
 
-  addComment(comment: { songId: number, commentText: string, isAnonymous: boolean, userId: number }) {
+  addComment(comment: { songId: number, commentText: string, isAnonymous: boolean, userId: number | null }) {
     return this.http.post<Comment>(`${this.commentApiUrl}`, comment);
   }
 

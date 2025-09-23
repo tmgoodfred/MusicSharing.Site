@@ -48,7 +48,7 @@ export class BlogService {
     );
   }
 
-  addBlogComment(comment: { blogPostId: number; commentText: string; isAnonymous: boolean; userId: number }): Observable<AppComment> {
+  addBlogComment(comment: { blogPostId: number; commentText: string; isAnonymous: boolean; userId: number | null }): Observable<AppComment> {
     return this.http.post<AppComment>(`${this.commentApiUrl}`, comment);
   }
 

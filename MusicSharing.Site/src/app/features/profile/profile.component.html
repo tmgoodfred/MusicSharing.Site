@@ -209,7 +209,9 @@
               <div class="ml-3 flex-1">
                 <div class="flex justify-between items-start">
                   <div>
-                    <span class="font-medium">{{ profileUser.username }}</span>
+                    <span class="font-medium">
+                      {{ isAnonymousComment(activity) ? 'Anonymous' : profileUser.username }}
+                    </span>
                     <span class="ml-1">{{ formatActivityType(activity) }}</span>
                   </div>
                   <span class="text-xs text-gray-500">{{ formatDate(activity.createdAt) }}</span>

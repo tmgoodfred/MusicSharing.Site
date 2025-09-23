@@ -1,0 +1,23 @@
+/* Target the song selection boxes to match dark theme text boxes */
+.dark-theme .bg-gray-50.dark\:bg-gray-800,
+:host-context(.dark-theme) .bg-gray-50.dark\:bg-gray-800 {
+  background-color: #333 !important; /* Match the color used in styles.css for dark theme inputs */
+  border: 1px solid #555;
+}
+
+  /* Make text in these containers visible with consistent styling */
+  .dark-theme .bg-gray-50.dark\:bg-gray-800 h3,
+  .dark-theme .bg-gray-50.dark\:bg-gray-800 .font-medium {
+    color: white !important;
+  }
+
+  .dark-theme .bg-gray-50.dark\:bg-gray-800 .text-gray-500,
+  .dark-theme .bg-gray-50.dark\:bg-gray-800 .text-sm,
+  .dark-theme .bg-gray-50.dark\:bg-gray-800 .text-xs {
+    color: #e2e8f0 !important;
+  }
+
+  /* Ensure song list items in the boxes have proper hover state */
+  .dark-theme .bg-gray-50.dark\:bg-gray-800 .dark\:hover\:bg-gray-700:hover {
+    background-color: #444 !important;
+  }

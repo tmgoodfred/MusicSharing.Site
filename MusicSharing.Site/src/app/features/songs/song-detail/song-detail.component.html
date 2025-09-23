@@ -47,6 +47,22 @@
           <h1 class="text-2xl font-bold">{{ song.title }}</h1>
           <h2 class="text-lg text-gray-600 dark:text-gray-400 mb-3">{{ song.artist }}</h2>
 
+          <!-- Uploader (avatar + name) links to profile -->
+          <div *ngIf="song.userId" class="flex items-center mb-4">
+            <a [routerLink]="['/profile', song.user?.id || song.userId]" class="flex items-center group">
+              <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden mr-2">
+                <img *ngIf="song.user?.profilePicturePath"
+                     [src]="getProfilePictureUrl(song.user?.id || song.userId!)"
+                     [alt]="song.user?.username || 'User'"
+                     class="w-full h-full object-cover">
+                <span *ngIf="!song.user?.profilePicturePath">{{ getUserInitial(song.user?.username) }}</span>
+              </div>
+              <span class="text-sm group-hover:text-primary">
+                {{ song.user?.username || 'View uploader profile' }}
+              </span>
+            </a>
+          </div>
+
           <div class="flex items-center mb-4">
             <div class="flex items-center">
               <span class="mr-2">Rating: </span>
@@ -127,11 +143,11 @@
       <div class="bg-card-background rounded-lg shadow-lg p-6">
         <h2 class="text-xl font-semibold mb-4">Comments</h2>
 
-        <!-- Comment form for logged in users -->
-        <div *ngIf="currentUser" class="mb-6">
+        <!-- Comment form -->
+        <div class="mb-6">
           <form [formGroup]="commentForm" (ngSubmit)="submitComment()">
             <textarea formControlName="commentText"
-                      placeholder="Write a comment..."
+                      placeholder="{{currentUser ? 'Write a comment...' : 'Write a comment as Anonymous...'}}"
                       class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                       [ngClass]="{'border-red-500': commentForm.get('commentText')?.invalid && commentForm.get('commentText')?.touched}"
                       rows="3"></textarea>
@@ -140,12 +156,14 @@
               <span *ngIf="commentForm.get('commentText')?.errors?.['minlength']">Comment must be at least 2 characters</span>
             </div>
 
-            <div class="flex items-center justify-between mt-3">
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" formControlName="isAnonymous" class="form-checkbox h-4 w-4">
-                <span>Comment anonymously</span>
-              </label>
-
+            <div class="flex justify-end mt-3">
+              <div class="text-gray-500 mr-auto text-sm">
+                <span *ngIf="!currentUser">Commenting as Anonymous</span>
+                <div *ngIf="currentUser" class="flex items-center">
+                  <input type="checkbox" id="isAnonymous" formControlName="isAnonymous" class="mr-2">
+                  <label for="isAnonymous">Post anonymously</label>
+                </div>
+              </div>
               <button type="submit"
                       class="btn-primary"
                       [disabled]="commentForm.invalid || isSubmittingComment">
@@ -161,23 +179,41 @@
           </form>
         </div>
 
-        <div *ngIf="!currentUser" class="mb-6 text-center py-4 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded">
-          <p>You need to be logged in to leave comments.</p>
-          <a routerLink="/auth/login" class="text-primary hover:underline mt-2 inline-block">Log In</a>
-        </div>
-
-        <!-- Comments list -->
+        <!-- Comments list with profile links -->
         <div *ngIf="song.comments && song.comments.length > 0" class="space-y-4">
           <div *ngFor="let comment of song.comments" class="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
             <div class="flex items-start">
               <div class="flex-shrink-0">
-                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-                  {{ getCommentAuthor(comment).charAt(0) }}
-                </div>
+                <!-- Avatar links to profile if not anonymous -->
+                <ng-container *ngIf="!comment.isAnonymous && comment.user; else anonymousOrNoLink">
+                  <a [routerLink]="['/profile', comment.user.id]" class="block">
+                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+                      <img *ngIf="comment.user.profilePicturePath"
+                           [src]="getUserProfilePicture(comment)"
+                           [alt]="getCommentAuthor(comment)"
+                           class="w-full h-full object-cover">
+                      <span *ngIf="!comment.user.profilePicturePath">{{ getUserInitial(comment.user.username) }}</span>
+                    </div>
+                  </a>
+                </ng-container>
+                <ng-template #anonymousOrNoLink>
+                  <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+                    <span>{{ getCommentAuthor(comment).charAt(0) }}</span>
+                  </div>
+                </ng-template>
               </div>
               <div class="ml-3 flex-1">
                 <div class="flex items-center">
-                  <span class="font-medium">{{ getCommentAuthor(comment) }}</span>
+                  <!-- Name links to profile if not anonymous -->
+                  <ng-container *ngIf="!comment.isAnonymous && comment.user; else anonymousOrUnknownUser">
+                    <a [routerLink]="['/profile', comment.user.id]" class="font-medium hover:text-primary">
+                      {{ getCommentAuthor(comment) }}
+                    </a>
+                  </ng-container>
+                  <ng-template #anonymousOrUnknownUser>
+                    <span class="font-medium">{{ getCommentAuthor(comment) }}</span>
+                  </ng-template>
+
                   <span class="ml-2 text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
                   <button *ngIf="canDeleteComment(comment)"
                           (click)="deleteComment(comment)"

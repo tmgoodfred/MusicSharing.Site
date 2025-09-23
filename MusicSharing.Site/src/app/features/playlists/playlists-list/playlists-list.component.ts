@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PlaylistService } from '../../../core/services/playlists.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SongService } from '../../../core/services/song.service';
 import { Playlist, User } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -20,7 +21,8 @@ export class PlaylistsListComponent implements OnInit {
 
   constructor(
     private playlistService: PlaylistService,
-    private authService: AuthService
+    private authService: AuthService,
+    private songService: SongService
   ) { }
 
   ngOnInit(): void {
@@ -76,5 +78,9 @@ export class PlaylistsListComponent implements OnInit {
 
   getSongCount(playlist: Playlist): number {
     return playlist.songs?.length || 0;
+  }
+
+  getArtworkUrl(songId: number | undefined): string {
+    return songId !== undefined ? this.songService.getArtworkUrl(songId) : '';
   }
 }

@@ -114,4 +114,8 @@ export class AuthService {
   updateCurrentUser(user: User): void {
     this.currentUserSubject.next(user);
   }
+
+  getUserById(id: number): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/${id}`);
+  }
 }

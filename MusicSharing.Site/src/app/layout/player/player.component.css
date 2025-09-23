@@ -107,6 +107,12 @@
     background: rgba(239,68,68,0.08);
   }
 
+/* New: Disabled button styling */
+.disabled-button {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
   .queue-panel {

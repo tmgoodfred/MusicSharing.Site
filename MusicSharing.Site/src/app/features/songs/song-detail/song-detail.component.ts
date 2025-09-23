@@ -7,6 +7,8 @@ import { ImageService } from '../../../core/services/image.service';
 import { PlayerService } from '../../../core/services/player.service';
 import { Song, Comment, User, UserRole } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'app-song-detail',
@@ -77,6 +79,15 @@ export class SongDetailComponent implements OnInit {
     return this.songService.getArtworkUrl(songId);
   }
 
+  // New helpers for profile links
+  getProfilePictureUrl(userId: number): string {
+    return this.imageService.getProfileImageUrl(userId);
+  }
+
+  getUserInitial(username?: string): string {
+    return username ? username.charAt(0).toUpperCase() : '?';
+  }
+
   loadSong(): void {
     const songId = this.route.snapshot.paramMap.get('id');
     if (!songId) {
@@ -92,6 +103,15 @@ export class SongDetailComponent implements OnInit {
         this.updateIsOwner();
         this.loadComments();
         this.loadRatings();
+
+        // Hydrate uploader user info if missing
+        if (this.song && (!this.song.user || !this.song.user.username) && this.song.userId) {
+          this.authService.getUserById(this.song.userId).pipe(
+            catchError(() => of(null))
+          ).subscribe(user => {
+            if (user && this.song) this.song.user = user;
+          });
+        }
       },
       error: (error) => {
         this.error = 'Error loading song details';
@@ -99,6 +119,13 @@ export class SongDetailComponent implements OnInit {
         console.error('Error loading song', error);
       }
     });
+  }
+
+  getUserProfilePicture(comment: Comment): string {
+    if (comment.isAnonymous || !comment.user || !comment.user.id) {
+      return '';
+    }
+    return this.imageService.getProfileImageUrl(comment.user.id);
   }
 
   loadRatings(): void {
@@ -121,7 +148,38 @@ export class SongDetailComponent implements OnInit {
     if (!this.song) return;
     this.songService.getComments(this.song.id).subscribe({
       next: (comments) => {
-        if (this.song) this.song.comments = comments;
+        // Find comments that need user information
+        const commentsNeedingUsers = comments
+          .filter(c => !c.isAnonymous && (!c.user || !c.user.username))
+          .map(c => (c as any).userId ?? c.user?.id)
+          .filter((id): id is number => id !== undefined && id !== null);
+
+        if (commentsNeedingUsers.length > 0) {
+          const uniqueUserIds = Array.from(new Set(commentsNeedingUsers));
+          const userMap = new Map<number, User>();
+
+          forkJoin(
+            uniqueUserIds.map(userId =>
+              this.authService.getUserById(userId).pipe(
+                catchError(() => of(null))
+              )
+            )
+          ).subscribe(users => {
+            users.filter((u): u is User => u !== null)
+              .forEach(user => userMap.set(user.id, user));
+
+            comments.forEach(comment => {
+              const userId = (comment as any).userId ?? comment.user?.id;
+              if (!comment.isAnonymous && userId && userMap.has(userId)) {
+                comment.user = userMap.get(userId);
+              }
+            });
+
+            if (this.song) this.song.comments = comments;
+          });
+        } else {
+          if (this.song) this.song.comments = comments;
+        }
       }
     });
   }
@@ -141,21 +199,24 @@ export class SongDetailComponent implements OnInit {
   }
 
   submitComment(): void {
-    if (this.commentForm.invalid || !this.song || this.isSubmittingComment || !this.currentUser) return;
+    if (this.commentForm.invalid || !this.song || this.isSubmittingComment) return;
 
     this.isSubmittingComment = true;
 
     const comment = {
       songId: this.song.id,
       commentText: this.commentForm.value.commentText,
-      isAnonymous: this.commentForm.value.isAnonymous,
-      userId: this.currentUser.id
+      isAnonymous: this.currentUser ? this.commentForm.value.isAnonymous : true,
+      userId: this.currentUser ? this.currentUser.id : null
     };
 
     this.songService.addComment(comment).subscribe({
       next: () => {
         this.loadComments();
-        this.commentForm.reset({ commentText: '', isAnonymous: false });
+        this.commentForm.reset({
+          commentText: '',
+          isAnonymous: this.currentUser ? false : true
+        });
         this.isSubmittingComment = false;
       },
       error: () => { this.isSubmittingComment = false; }
@@ -227,25 +288,6 @@ export class SongDetailComponent implements OnInit {
     });
   }
 
-  // Delete handlers (pass userId as query parameter)
-  confirmDelete(): void {
-    if (!this.song || this.isDeleting || !this.currentUser) return;
-    if (!confirm('Are you sure you want to delete this song? This action cannot be undone.')) return;
-
-    this.isDeleting = true;
-    this.songService.deleteSong(this.song.id, this.currentUser.id).subscribe({
-      next: () => {
-        this.isDeleting = false;
-        this.router.navigate(['/songs']);
-      },
-      error: (err) => {
-        this.isDeleting = false;
-        console.error('Failed to delete song:', err);
-        alert('Failed to delete song. Please try again.');
-      }
-    });
-  }
-
   // NEW: permissions + delete for comments
   canDeleteComment(comment: Comment): boolean {
     if (!this.currentUser) return false;
@@ -262,6 +304,25 @@ export class SongDetailComponent implements OnInit {
       error: (err) => {
         console.error('Failed to delete comment:', err);
         alert('Failed to delete comment. You may not have permission.');
+      }
+    });
+  }
+
+  // Delete handlers (pass userId as query parameter)
+  confirmDelete(): void {
+    if (!this.song || this.isDeleting || !this.currentUser) return;
+    if (!confirm('Are you sure you want to delete this song? This action cannot be undone.')) return;
+
+    this.isDeleting = true;
+    this.songService.deleteSong(this.song.id, this.currentUser.id).subscribe({
+      next: () => {
+        this.isDeleting = false;
+        this.router.navigate(['/songs']);
+      },
+      error: (err) => {
+        this.isDeleting = false;
+        console.error('Failed to delete song:', err);
+        alert('Failed to delete song. Please try again.');
       }
     });
   }

@@ -82,17 +82,15 @@ export class BlogDetailComponent implements OnInit {
   }
 
   submitComment(): void {
-    if (this.commentForm.invalid || !this.blogPost || this.isSubmittingComment || !this.currentUser) {
-      return;
-    }
+    if (this.commentForm.invalid || !this.blogPost || this.isSubmittingComment) return;
 
     this.isSubmittingComment = true;
 
     const comment = {
       blogPostId: this.blogPost.id,
       commentText: this.commentForm.value.commentText,
-      isAnonymous: this.commentForm.value.isAnonymous,
-      userId: this.currentUser.id
+      isAnonymous: this.currentUser ? this.commentForm.value.isAnonymous : true,
+      userId: this.currentUser ? this.currentUser.id : null
     };
 
     this.blogService.addBlogComment(comment).subscribe({
@@ -100,7 +98,7 @@ export class BlogDetailComponent implements OnInit {
         this.loadComments();
         this.commentForm.reset({
           commentText: '',
-          isAnonymous: false
+          isAnonymous: this.currentUser ? false : true
         });
         this.isSubmittingComment = false;
       },

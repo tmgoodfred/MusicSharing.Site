@@ -10,38 +10,36 @@
          class="p-4 bg-card-background rounded-lg shadow">
       <div class="flex items-start">
         <div class="flex-shrink-0">
-          <!-- Avatar (links to profile when available) -->
-          <ng-container *ngIf="activity.user as u; else avatarNoLink">
-            <a [routerLink]="['/profile', u.id]" class="block">
+          <!-- Avatar (links to profile when available and not anonymous) -->
+          <ng-container *ngIf="activity.user && !isAnonymousComment(activity); else anonymousOrNoLink">
+            <a [routerLink]="['/profile', activity.user.id]" class="block">
               <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
-                <img *ngIf="u.profilePicturePath"
-                     [src]="'http://192.168.1.217:5000/api/user/' + u.id + '/profile-picture'"
-                     alt="{{ u.username || 'User' }}"
+                <img *ngIf="activity.user.profilePicturePath"
+                     [src]="getProfilePictureUrl(activity.user.id)"
+                     alt="{{ activity.user.username }}"
                      class="w-full h-full object-cover">
-                <span *ngIf="!u.profilePicturePath">{{ getUserInitial(u.username) }}</span>
+                <span *ngIf="!activity.user.profilePicturePath">{{ getUserInitial(activity.user.username) }}</span>
               </div>
             </a>
           </ng-container>
-          <ng-template #avatarNoLink>
+          <ng-template #anonymousOrNoLink>
             <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
-              <img *ngIf="activity.user?.profilePicturePath"
-                   [src]="'http://192.168.1.217:5000/api/user/' + activity.user?.id + '/profile-picture'"
-                   alt="{{ activity.user?.username || 'User' }}"
-                   class="w-full h-full object-cover">
-              <span *ngIf="!activity.user?.profilePicturePath">{{ getUserInitial(activity.user?.username) }}</span>
+              <span>A</span>
             </div>
           </ng-template>
         </div>
 
         <div class="ml-4 flex-1">
-          <!-- Username (links to profile when available) -->
+          <!-- Username (links to profile when available and not anonymous) -->
           <p class="font-medium">
-            <ng-container *ngIf="activity.user as u; else unknownUser">
-              <a [routerLink]="['/profile', u.id]" class="hover:text-primary">
-                {{ u.username }}
+            <ng-container *ngIf="activity.user && !isAnonymousComment(activity); else anonymousOrUnknownUser">
+              <a [routerLink]="['/profile', activity.user.id]" class="hover:text-primary">
+                {{ activity.user.username }}
               </a>
             </ng-container>
-            <ng-template #unknownUser>{{ activity.user?.username || 'Unknown user' }}</ng-template>
+            <ng-template #anonymousOrUnknownUser>
+              {{ isAnonymousComment(activity) ? 'Anonymous' : (activity.user?.username || 'Unknown user') }}
+            </ng-template>
           </p>
 
           <p class="text-sm text-gray-500">{{ formatActivityType(activity) }}</p>
@@ -58,7 +56,7 @@
 
           <!-- Render comment text for comment activities -->
           <p *ngIf="activity.type === 'Comment'" class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-            “{{ commentTexts[activity.id] || '...' }}”
+            "{{ commentTexts[activity.id] || '...' }}"
           </p>
         </div>
       </div>

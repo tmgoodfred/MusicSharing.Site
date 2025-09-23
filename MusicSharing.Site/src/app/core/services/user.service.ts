@@ -117,4 +117,10 @@ export class UserService {
     return this.http.get<Analytics>(`${this.userApiUrl}/${userId}/analytics`);
   }
 
+  // Add this new method to fetch all activities including anonymous ones
+  getAllActivities(): Observable<Activity[]> {
+    return this.http.get<any>(`${this.activityApiUrl}`).pipe(
+      map(res => this.unwrapArray<Activity>(res))
+    );
+  }
 }

@@ -36,6 +36,10 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  getProfilePictureUrl(userId: number): string {
+    return this.userService.getProfilePictureUrl(userId);
+  }
+
   // Helper method for safe access to username's first character
   getUserInitial(username: string | undefined): string {
     return username ? username.charAt(0) : '?';
@@ -65,11 +69,22 @@ export class HomeComponent implements OnInit {
       next: (activities) => {
         this.activities = activities;
 
-        // Hydrate authors (user) for each activity
-        this.hydrateActivityUsers(this.activities);
+        // If feed is empty, fetch all activities including anonymous ones
+        if (this.activities.length === 0) {
+          this.userService.getAllActivities().subscribe({
+            next: (allActivities) => {
+              this.activities = allActivities;
+              this.hydrateActivityUsers(this.activities);
+              this.hydrateCommentTexts(this.activities);
+            }
+          });
+        } else {
+          // Hydrate authors (user) for each activity
+          this.hydrateActivityUsers(this.activities);
 
-        // Hydrate comment texts (for Comment activities)
-        this.hydrateCommentTexts(this.activities);
+          // Hydrate comment texts (for Comment activities)
+          this.hydrateCommentTexts(this.activities);
+        }
       },
       error: () => {
         this.activities = [];
@@ -160,12 +175,42 @@ export class HomeComponent implements OnInit {
 
       if (parsed.kind === 'song' && parsed.songId && parsed.commentId) {
         this.songService.getSongCommentById(parsed.songId, parsed.commentId).subscribe({
-          next: c => this.commentTexts[a.id] = c.commentText,
+          next: c => {
+            this.commentTexts[a.id] = c.commentText;
+
+            // Store anonymity info in the activity data if not already present
+            if (a.data && typeof a.data === 'string') {
+              try {
+                const dataObj = JSON.parse(a.data);
+                if (!('isAnonymous' in dataObj) && !('IsAnonymous' in dataObj)) {
+                  dataObj.isAnonymous = c.isAnonymous;
+                  a.data = JSON.stringify(dataObj);
+                }
+              } catch (e) {
+                // If parsing fails, just leave as is
+              }
+            }
+          },
           error: () => this.commentTexts[a.id] = ''
         });
       } else if (parsed.kind === 'blog' && parsed.blogPostId && parsed.commentId) {
         this.songService.getBlogCommentById(parsed.blogPostId, parsed.commentId).subscribe({
-          next: c => this.commentTexts[a.id] = c.commentText,
+          next: c => {
+            this.commentTexts[a.id] = c.commentText;
+
+            // Store anonymity info in the activity data if not already present
+            if (a.data && typeof a.data === 'string') {
+              try {
+                const dataObj = JSON.parse(a.data);
+                if (!('isAnonymous' in dataObj) && !('IsAnonymous' in dataObj)) {
+                  dataObj.isAnonymous = c.isAnonymous;
+                  a.data = JSON.stringify(dataObj);
+                }
+              } catch (e) {
+                // If parsing fails, just leave as is
+              }
+            }
+          },
           error: () => this.commentTexts[a.id] = ''
         });
       }
@@ -200,5 +245,19 @@ export class HomeComponent implements OnInit {
     if (typeFromObj === 'blog' && blogPostId) return { link: ['/blog', blogPostId], title, kind: 'blog' };
 
     return null;
+  }
+
+  isAnonymousComment(activity: Activity): boolean {
+    if (activity.type !== 'Comment') return false;
+
+    const obj = this.parseActivityData(activity.data);
+    return obj?.isAnonymous === true || obj?.IsAnonymous === true;
+  }
+
+  getCommentAuthorDisplayName(activity: Activity): string {
+    if (this.isAnonymousComment(activity)) {
+      return 'Anonymous';
+    }
+    return activity.user?.username || 'Unknown user';
   }
 }
