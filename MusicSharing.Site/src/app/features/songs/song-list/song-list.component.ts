@@ -3,6 +3,7 @@ import { Song, Rating } from '../../../core/models/models';
 import { SongService } from '../../../core/services/song.service';
 import { PlayerService } from '../../../core/services/player.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ImageService } from '../../../core/services/image.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -22,7 +23,8 @@ export class SongListComponent implements OnInit {
   constructor(
     private songService: SongService,
     private playerService: PlayerService,
-    private authService: AuthService
+    private authService: AuthService,
+    private imageService: ImageService
   ) { }
 
   ngOnInit(): void {
@@ -38,6 +40,10 @@ export class SongListComponent implements OnInit {
     const sum = ratings.reduce((acc, rating) => acc + rating.ratingValue, 0);
     const average = sum / ratings.length;
     return average.toFixed(1);
+  }
+
+  getArtworkUrl(songId: number): string {
+    return this.songService.getArtworkUrl(songId);
   }
 
   loadSongs(): void {

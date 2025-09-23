@@ -4,25 +4,30 @@ import { ThemeService } from '../../core/services/theme.service';
 import { Observable } from 'rxjs';
 import { User } from '../../core/models/models';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule, FormsModule]
 })
 export class HeaderComponent {
   isDarkMode$: Observable<boolean>;
   currentUser$: Observable<User | null>;
-  isDropdownOpen = false; // Add this property
+  isDropdownOpen = false;
   menuOpen = false;
   isMobile = false;
 
+  // Quick search text in header
+  quickQuery = '';
+
   constructor(
     private themeService: ThemeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {
     this.isDarkMode$ = this.themeService.darkMode$;
     this.currentUser$ = this.authService.currentUser$;
@@ -65,5 +70,12 @@ export class HeaderComponent {
   logout(): void {
     this.isDropdownOpen = false;
     this.authService.logout();
+  }
+
+  goToSearch(): void {
+    const q = this.quickQuery?.trim();
+    if (!q) return;
+    // Navigate to /search?q=... ; SearchComponent will auto-run based on query param
+    this.router.navigate(['/search'], { queryParams: { q } });
   }
 }

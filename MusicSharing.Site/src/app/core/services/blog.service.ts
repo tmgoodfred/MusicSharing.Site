@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { BlogPost, Comment as AppComment } from '../models/models';
+import { HttpParams } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -49,5 +50,13 @@ export class BlogService {
 
   addBlogComment(comment: { blogPostId: number; commentText: string; isAnonymous: boolean; userId: number }): Observable<AppComment> {
     return this.http.post<AppComment>(`${this.commentApiUrl}`, comment);
+  }
+
+  // NEW: delete a comment by id with userId/isAdmin authorization
+  deleteComment(commentId: number, userId: number, isAdmin: boolean): Observable<any> {
+    const params = new HttpParams()
+      .set('userId', userId.toString())
+      .set('isAdmin', String(isAdmin));
+    return this.http.delete(`${this.commentApiUrl}/${commentId}`, { params });
   }
 }

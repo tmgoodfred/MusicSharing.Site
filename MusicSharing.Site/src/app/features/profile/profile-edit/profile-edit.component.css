@@ -1,0 +1,26 @@
+/* Reuse modal styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+
+.modal {
+  width: 100%;
+  max-width: 560px;
+  background: var(--card-background, #fff);
+  color: inherit;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  padding: 1.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal {
+    background: #1f2937;
+  }
+}

@@ -25,6 +25,7 @@
     "@ngrx/store": "19.2",
     "howler": "^2.2.4",
     "jest-editor-support": "*",
+    "ngx-image-cropper": "^6.3.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

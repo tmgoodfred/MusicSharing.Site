@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } 
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PlaylistService } from '../../../core/services/playlists.service';
 import { SongService } from '../../../core/services/song.service';
+import { ImageService } from '../../../core/services/image.service';
 import { CommonModule } from '@angular/common';
 import { Playlist, Song, User } from '../../../core/models/models';
 import { AuthService } from '../../../core/services/auth.service';
@@ -36,6 +37,7 @@ export class PlaylistsCreateEditComponent implements OnInit {
     private songService: SongService,
     private authService: AuthService,
     private route: ActivatedRoute,
+    private imageService: ImageService,
     private router: Router
   ) {
     this.playlistForm = this.fb.group({
@@ -58,6 +60,10 @@ export class PlaylistsCreateEditComponent implements OnInit {
     } else {
       this.loadAvailableSongs();
     }
+  }
+
+  getArtworkUrl(songId: number): string {
+    return this.songService.getArtworkUrl(songId);
   }
 
   loadPlaylistData(): void {

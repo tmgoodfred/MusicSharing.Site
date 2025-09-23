@@ -110,4 +110,8 @@ export class AuthService {
   getToken(): string | null {
     return this.tokenStorage.getToken();
   }
+
+  updateCurrentUser(user: User): void {
+    this.currentUserSubject.next(user);
+  }
 }

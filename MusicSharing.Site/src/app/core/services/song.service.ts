@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Song } from '../models/models';
-import { Comment, Rating } from '../models/models';
+import { Song, User, Comment, Rating, UserRole } from '../models/models';
 import { map } from 'rxjs/operators';
+import { ImageService } from './image.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,10 @@ export class SongService {
   private commentApiUrl = 'http://192.168.1.217:5000/api/comment';
   private ratingApiUrl = 'http://192.168.1.217:5000/api/rating';
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private imageService: ImageService
+  ) { }
 
   private unwrapArray<T>(value: any): T[] {
     if (!value) return [];
@@ -22,13 +25,19 @@ export class SongService {
     return value as T[];
   }
 
+  // UPDATED: map uploader -> user and set userId so UI can show Users section
   private normalizeSong(raw: any): Song {
+    const userRaw = raw?.user ?? raw?.User ?? raw?.uploader ?? raw?.Uploader;
+    const user = userRaw ? this.normalizeUser(userRaw) : undefined;
+
     return {
       ...raw,
-      tags: this.unwrapArray<string>(raw.tags),
-      categories: this.unwrapArray(raw.categories),
-      comments: this.unwrapArray<Comment>(raw.comments),
-      ratings: this.unwrapArray<Rating>(raw.ratings)
+      tags: this.unwrapArray<string>(raw?.tags),
+      categories: this.unwrapArray<any>(raw?.categories),
+      comments: this.unwrapArray<Comment>(raw?.comments),
+      ratings: this.unwrapArray<Rating>(raw?.ratings),
+      user,
+      userId: raw?.userId ?? raw?.UserId ?? user?.id
     } as Song;
   }
 
@@ -44,28 +53,112 @@ export class SongService {
     );
   }
 
+  // Supports uploader filter and mixed results (server returns an array of song results with Uploader/user)
   searchSongs(
     title?: string,
     artist?: string,
     genre?: string,
     tags?: string[],
+    uploaderOrUser?: string,
     minPlays?: number,
+    maxPlays?: number,
+    minRating?: number,
     maxRating?: number,
-    fromDate?: string
-  ): Observable<Song[]> {
+    fromDate?: string,
+    toDate?: string,
+    categoryIds?: number[]
+  ): Observable<{ songs: Song[]; users: User[] }> {
     let params = new HttpParams();
 
     if (title) params = params.set('title', title);
     if (artist) params = params.set('artist', artist);
     if (genre) params = params.set('genre', genre);
-    if (minPlays) params = params.set('minPlays', minPlays.toString());
-    if (maxRating) params = params.set('maxRating', maxRating.toString());
+    if (uploaderOrUser) {
+      // Backend may accept either 'uploader' or 'user'. Send both to be safe.
+      params = params.set('uploader', uploaderOrUser);
+      params = params.set('user', uploaderOrUser);
+    }
+    if (minPlays !== undefined) params = params.set('minPlays', String(minPlays));
+    if (maxPlays !== undefined) params = params.set('maxPlays', String(maxPlays));
+    if (minRating !== undefined) params = params.set('minRating', String(minRating));
+    if (maxRating !== undefined) params = params.set('maxRating', String(maxRating));
     if (fromDate) params = params.set('fromDate', fromDate);
+    if (toDate) params = params.set('toDate', toDate);
+    if (categoryIds && categoryIds.length) params = params.set('categoryIds', categoryIds.join(','));
     if (tags && tags.length) params = params.set('tags', tags.join(','));
 
     return this.http.get<any>(`${this.apiUrl}/search`, { params }).pipe(
-      map(res => this.unwrapArray<any>(res).map(s => this.normalizeSong(s)))
+      map(res => {
+        // Case 1: Legacy array of songs
+        if (Array.isArray(res) || res?.$values) {
+          const songs = this.unwrapArray<any>(res).map(s => this.normalizeSong(s));
+          return { songs, users: [] as User[] };
+        }
+
+        // Case 2: Object with songs/users already split
+        if ((res?.songs || res?.Songs) || (res?.users || res?.Users)) {
+          const songsRaw = res?.songs ?? res?.Songs ?? [];
+          const usersRaw = res?.users ?? res?.Users ?? [];
+          const songs = this.unwrapArray<any>(songsRaw).map((s: any) => this.normalizeSong(s));
+          const users = this.unwrapArray<User>(usersRaw).map((u: any) => this.normalizeUser(u));
+          return { songs, users };
+        }
+
+        // Case 3: New API shape returns an array of SongSearchResultDto with embedded Uploader
+        const rows = this.unwrapArray<any>(res);
+        const usersMap = new Map<number, User>();
+        const songs = rows.map(item => {
+          // Uploader can be 'Uploader' or 'uploader'
+          const uploaderRaw = item?.Uploader ?? item?.uploader ?? null;
+          let uploaderUser: User | undefined;
+
+          if (uploaderRaw && uploaderRaw.Id != null) {
+            const mapped = this.normalizeUser(uploaderRaw);
+            usersMap.set(mapped.id, mapped);
+            uploaderUser = mapped;
+          }
+
+          // Map DTO fields (Title/Artist/Genre/Tags/UploadDate/PlayCount/DownloadCount)
+          const rawSong = {
+            id: item.Id ?? item.id,
+            title: item.Title ?? item.title,
+            artist: item.Artist ?? item.artist,
+            genre: item.Genre ?? item.genre,
+            tags: item.Tags ?? item.tags ?? [],
+            uploadDate: item.UploadDate ?? item.uploadDate,
+            playCount: item.PlayCount ?? item.playCount ?? 0,
+            downloadCount: item.DownloadCount ?? item.downloadCount ?? 0,
+            // Preserve any present fields like filePath/artworkPath if server includes them
+            filePath: item.filePath ?? item.FilePath,
+            artworkPath: item.artworkPath ?? item.ArtworkPath,
+            categories: item.Categories ?? item.categories ?? [],
+            comments: item.Comments ?? item.comments ?? [],
+            ratings: item.Ratings ?? item.ratings ?? [],
+            user: uploaderUser,
+            userId: uploaderUser?.id
+          };
+
+          return this.normalizeSong(rawSong);
+        });
+
+        const users = Array.from(usersMap.values());
+        return { songs, users };
+      })
     );
+  }
+
+  private normalizeUser(raw: any): User {
+    const roleStr = (raw.Role ?? raw.role ?? '').toString();
+    const normalizedRole = roleStr.toLowerCase() === 'admin' ? UserRole.Admin : UserRole.User;
+
+    return {
+      id: raw.Id ?? raw.id,
+      username: raw.Username ?? raw.username,
+      email: raw.Email ?? raw.email,
+      role: normalizedRole,
+      createdAt: raw.CreatedAt ?? raw.createdAt,
+      profilePicturePath: raw.ProfilePicturePath ?? raw.profilePicturePath
+    } as User;
   }
 
   uploadSong(formData: FormData): Observable<Song> {
@@ -90,8 +183,26 @@ export class SongService {
     );
   }
 
+  // NEW: get a single comment by song + commentId
+  getSongCommentById(songId: number, commentId: number) {
+    return this.http.get<Comment>(`${this.commentApiUrl}/song/${songId}/${commentId}`);
+  }
+
+  // NEW: get a single blog comment by blogPost + commentId
+  getBlogCommentById(blogPostId: number, commentId: number) {
+    return this.http.get<Comment>(`${this.commentApiUrl}/blog/${blogPostId}/${commentId}`);
+  }
+
   addComment(comment: { songId: number, commentText: string, isAnonymous: boolean, userId: number }) {
     return this.http.post<Comment>(`${this.commentApiUrl}`, comment);
+  }
+
+  // NEW: delete a comment by id with userId/isAdmin authorization
+  deleteComment(commentId: number, userId: number, isAdmin: boolean): Observable<any> {
+    const params = new HttpParams()
+      .set('userId', userId.toString())
+      .set('isAdmin', String(isAdmin));
+    return this.http.delete(`${this.commentApiUrl}/${commentId}`, { params });
   }
 
   getRatings(songId: number) {
@@ -105,5 +216,15 @@ export class SongService {
 
   addOrUpdateRating(rating: { songId: number, userId: number, ratingValue: number }) {
     return this.http.post<Rating>(`${this.ratingApiUrl}`, rating);
+  }
+
+  // Add this new method to get song artwork URL
+  getArtworkUrl(songId: number, forceRefresh = false): string {
+    return this.imageService.getSongArtworkUrl(songId, forceRefresh);
+  }
+
+  // When uploading or updating a song with new artwork, call this to refresh the cache
+  refreshArtworkCache(songId: number): void {
+    this.imageService.clearImageCache('artwork', songId);
   }
 }

@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { PlaylistService } from '../../../core/services/playlists.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ImageService } from '../../../core/services/image.service';
+import { SongService } from '../../../core/services/song.service';
 import { PlayerService } from '../../../core/services/player.service';
 import { Playlist, Song, User } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
@@ -26,7 +28,9 @@ export class PlaylistsDetailComponent implements OnInit {
         private router: Router,
         private playlistService: PlaylistService,
         private authService: AuthService,
-        private playerService: PlayerService
+      private playerService: PlayerService,
+      private songService: SongService,
+      private imageService: ImageService
     ) { }
 
     ngOnInit(): void {
@@ -35,6 +39,13 @@ export class PlaylistsDetailComponent implements OnInit {
             this.loadPlaylist();
         });
     }
+
+  getArtworkUrl(songId: number): string {
+    if (!songId) {
+      return '';
+    }
+    return this.songService.getArtworkUrl(songId);
+  }
 
     loadPlaylist(): void {
         const playlistId = this.route.snapshot.paramMap.get('id');

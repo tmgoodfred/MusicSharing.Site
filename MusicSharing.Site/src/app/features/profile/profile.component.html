@@ -21,7 +21,7 @@
         <div class="flex justify-center mb-4">
           <div class="w-24 h-24 rounded-full bg-primary flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
             <img *ngIf="profileUser.profilePicturePath"
-                 [src]="'http://192.168.1.217:5000/api/user/' + profileUser.id + '/profile-picture'"
+                 [src]="getProfilePictureUrl(profileUser.id)"
                  alt="{{ profileUser.username }}"
                  class="w-full h-full object-cover">
             <span *ngIf="!profileUser.profilePicturePath">{{ profileUser.username.charAt(0).toUpperCase() }}</span>
@@ -45,7 +45,8 @@
 
           <div *ngIf="!isOwnProfile && currentUser" class="flex justify-center">
             <button *ngIf="!isFollowing"
-                    (click)="followUser()"
+                    (click)="followUser()
+                    "
                     class="btn-primary w-full">
               Follow
             </button>
@@ -84,28 +85,36 @@
         <div class="border-b border-gray-200 dark:border-gray-700">
           <nav class="flex">
             <button (click)="setActiveTab('songs')"
-                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    class="px-4 py-3 text-center flex-1 border-b-2 transition-colors"
                     [class.border-primary]="activeTab === 'songs'"
                     [class.border-transparent]="activeTab !== 'songs'"
                     [class.text-primary]="activeTab === 'songs'">
               Songs
             </button>
             <button (click)="setActiveTab('activity')"
-                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    class="px-4 py-3 text-center flex-1 border-b-2 transition-colors"
                     [class.border-primary]="activeTab === 'activity'"
                     [class.border-transparent]="activeTab !== 'activity'"
                     [class.text-primary]="activeTab === 'activity'">
               Activity
             </button>
+            <button *ngIf="isOwnProfile"
+                    (click)="setActiveTab('analytics')"
+                    class="px-4 py-3 text-center flex-1 border-b-2 transition-colors"
+                    [class.border-primary]="activeTab === 'analytics'"
+                    [class.border-transparent]="activeTab !== 'analytics'"
+                    [class.text-primary]="activeTab === 'analytics'">
+              Analytics
+            </button>
             <button (click)="setActiveTab('followers')"
-                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    class="px-4 py-3 text-center flex-1 border-b-2 transition-colors"
                     [class.border-primary]="activeTab === 'followers'"
                     [class.border-transparent]="activeTab !== 'followers'"
                     [class.text-primary]="activeTab === 'followers'">
               Followers
             </button>
             <button (click)="setActiveTab('following')"
-                    class="px-4 py-3 text-center w-1/4 border-b-2 transition-colors"
+                    class="px-4 py-3 text-center flex-1 border-b-2 transition-colors"
                     [class.border-primary]="activeTab === 'following'"
                     [class.border-transparent]="activeTab !== 'following'"
                     [class.text-primary]="activeTab === 'following'">
@@ -137,7 +146,7 @@
                [routerLink]="['/songs', song.id]">
             <div class="relative">
               <img *ngIf="song.artworkPath"
-                   [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                   [src]="getArtworkUrl(song.id)"
                    [alt]="song.title"
                    class="w-full h-48 object-cover">
               <div *ngIf="!song.artworkPath" class="w-full h-48 bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
@@ -189,7 +198,6 @@
             {{ isOwnProfile ? 'You haven\'t performed any actions yet.' : 'This user hasn\'t performed any actions yet.' }}
           </p>
         </div>
-
         <div *ngIf="activities.length > 0" class="space-y-4">
           <div *ngFor="let activity of activities" class="bg-card-background rounded-lg shadow-lg p-4">
             <div class="flex items-start">
@@ -206,13 +214,71 @@
                   </div>
                   <span class="text-xs text-gray-500">{{ formatDate(activity.createdAt) }}</span>
                 </div>
-                <div *ngIf="activity.data" class="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  <!-- Attempt to parse and display activity data -->
-                  <ng-container *ngIf="activity.data">
-                    <div *ngIf="activity.type === 'Comment'">
-                      "{{ (activity.data | json) }}"
-                    </div>
-                  </ng-container>
+
+                <!-- Friendly secondary line for Uploads (show song title) -->
+                <div *ngIf="activity.type === 'Upload' && getActivityTitle(activity)" class="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                  “{{ getActivityTitle(activity) }}”
+                </div>
+
+                <!-- Render comment text for Comment activities -->
+                <div *ngIf="activity.type === 'Comment'" class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                  “{{ commentTexts[activity.id] || '...' }}”
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Tab (only for own profile) -->
+      <div *ngIf="activeTab === 'analytics' && isOwnProfile">
+        <div class="bg-card-background rounded-lg shadow-lg p-8">
+          <h3 class="text-lg font-semibold mb-6">Analytics</h3>
+
+          <div *ngIf="!analytics">
+            <p class="text-gray-500">No analytics data available.</p>
+          </div>
+
+          <div *ngIf="analytics" class="space-y-8">
+            <!-- Metrics grid (match Analytics model) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div>
+                <div class="text-sm text-gray-500">Total Songs</div>
+                <div class="text-2xl font-bold">{{ analytics.totalSongs }}</div>
+              </div>
+              <div>
+                <div class="text-sm text-gray-500">Total Plays</div>
+                <div class="text-2xl font-bold">{{ analytics.totalPlays }}</div>
+              </div>
+              <div>
+                <div class="text-sm text-gray-500">Total Downloads</div>
+                <div class="text-2xl font-bold">{{ analytics.totalDownloads }}</div>
+              </div>
+              <div>
+                <div class="text-sm text-gray-500">Average Rating</div>
+                <div class="text-2xl font-bold">{{ analytics.averageRating | number:'1.1-2' }}</div>
+              </div>
+            </div>
+
+            <!-- Highlights -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                <div class="text-sm text-gray-500 mb-1">Most Popular Song</div>
+                <div class="text-lg font-semibold text-gray-500">
+                  {{ analytics.mostPopularSongTitle || '—' }}
+                </div>
+                <div class="text-sm text-gray-500" *ngIf="analytics.mostPopularSongTitle">
+                  {{ analytics.mostPopularSongPlays }} plays
+                </div>
+              </div>
+
+              <div class="bg-gray-50 dark:bg-gray-800 rounded p-4">
+                <div class="text-sm text-gray-500 mb-1">Most Recent Upload</div>
+                <div class="text-lg font-semibold text-gray-500">
+                  {{ analytics.mostRecentSongTitle || '—' }}
+                </div>
+                <div class="text-sm text-gray-500" *ngIf="analytics.mostRecentSongTitle">
+                  {{ analytics.mostRecentUploadDate | date:'medium' }}
                 </div>
               </div>
             </div>
@@ -239,7 +305,7 @@
               <div class="flex-shrink-0">
                 <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
                   <img *ngIf="follower.profilePicturePath"
-                       [src]="'http://192.168.1.217:5000/api/user/' + follower.id + '/profile-picture'"
+                       [src]="getProfilePictureUrl(follower.id)"
                        alt="{{ follower.username }}"
                        class="w-full h-full object-cover">
                   <span *ngIf="!follower.profilePicturePath">{{ follower.username.charAt(0).toUpperCase() }}</span>
@@ -275,7 +341,7 @@
               <div class="flex-shrink-0">
                 <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
                   <img *ngIf="follow.profilePicturePath"
-                       [src]="'http://192.168.1.217:5000/api/user/' + follow.id + '/profile-picture'"
+                       [src]="getProfilePictureUrl(follow.id)"
                        alt="{{ follow.username }}"
                        class="w-full h-full object-cover">
                   <span *ngIf="!follow.profilePicturePath">{{ follow.username.charAt(0).toUpperCase() }}</span>

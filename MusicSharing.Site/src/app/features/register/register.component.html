@@ -25,6 +25,31 @@
       </div>
     </div>
 
+    <!-- Cropper modal -->
+    <div *ngIf="showCropper" class="modal-overlay" (click)="cancelCrop()">
+      <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="cropTitle">
+        <div class="flex items-center justify-between mb-3">
+          <h3 id="cropTitle" class="text-lg font-semibold">Crop Profile Picture</h3>
+          <button (click)="cancelCrop()" class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800" aria-label="Close">✕</button>
+        </div>
+
+        <image-cropper [imageChangedEvent]="imageChangedEvent"
+                       [maintainAspectRatio]="true"
+                       [aspectRatio]="1"
+                       [roundCropper]="true"
+                       [resizeToWidth]="512"
+                       format="png"
+                       (imageCropped)="imageCropped($event)"
+                       (loadImageFailed)="loadImageFailed()">
+        </image-cropper>
+
+        <div class="flex justify-end space-x-2 mt-3">
+          <button type="button" class="btn-secondary" (click)="cancelCrop()">Cancel</button>
+          <button type="button" class="btn-primary" (click)="confirmCrop()">Use Photo</button>
+        </div>
+      </div>
+    </div>
+
     <div class="mb-4">
       <label for="username" class="block mb-2">Username</label>
       <input type="text"

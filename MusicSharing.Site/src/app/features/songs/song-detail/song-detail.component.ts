@@ -3,8 +3,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { SongService } from '../../../core/services/song.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ImageService } from '../../../core/services/image.service';
 import { PlayerService } from '../../../core/services/player.service';
-import { Song, Comment, User, Rating } from '../../../core/models/models';
+import { Song, Comment, User, UserRole } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -22,6 +23,7 @@ export class SongDetailComponent implements OnInit {
   currentUser: User | null = null;
   userRating = 0;
   averageRating = 0;
+  isAdmin = false;
 
   commentForm: FormGroup;
   isSubmittingComment = false;
@@ -41,6 +43,7 @@ export class SongDetailComponent implements OnInit {
     private songService: SongService,
     private authService: AuthService,
     private playerService: PlayerService,
+    private imageService: ImageService,
     private fb: FormBuilder
   ) {
     this.commentForm = this.fb.group({
@@ -57,6 +60,7 @@ export class SongDetailComponent implements OnInit {
 
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      this.isAdmin = user?.role === UserRole.Admin;
       this.updateIsOwner();
     });
   }
@@ -67,6 +71,10 @@ export class SongDetailComponent implements OnInit {
 
   private updateIsOwner(): void {
     this.isOwner = !!(this.currentUser && this.song && this.song.userId === this.currentUser.id);
+  }
+
+  getArtworkUrl(songId: number): string {
+    return this.songService.getArtworkUrl(songId);
   }
 
   loadSong(): void {
@@ -207,6 +215,9 @@ export class SongDetailComponent implements OnInit {
     this.songService.updateSong(this.song.id, form).subscribe({
       next: (updated) => {
         this.song = { ...this.song!, ...updated };
+        if (this.selectedArtworkFile) {
+          this.songService.refreshArtworkCache(this.song!.id);
+        }
         this.closeEditModal();
       },
       error: (err) => {
@@ -231,6 +242,26 @@ export class SongDetailComponent implements OnInit {
         this.isDeleting = false;
         console.error('Failed to delete song:', err);
         alert('Failed to delete song. Please try again.');
+      }
+    });
+  }
+
+  // NEW: permissions + delete for comments
+  canDeleteComment(comment: Comment): boolean {
+    if (!this.currentUser) return false;
+    const ownerId = (comment as any).userId ?? comment.user?.id;
+    return this.isAdmin || ownerId === this.currentUser.id;
+  }
+
+  deleteComment(comment: Comment): void {
+    if (!this.currentUser) return;
+    if (!confirm('Delete this comment?')) return;
+
+    this.songService.deleteComment(comment.id, this.currentUser.id, this.isAdmin).subscribe({
+      next: () => this.loadComments(),
+      error: (err) => {
+        console.error('Failed to delete comment:', err);
+        alert('Failed to delete comment. You may not have permission.');
       }
     });
   }

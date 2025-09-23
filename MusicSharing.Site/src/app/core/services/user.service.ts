@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { User, Activity, Song, Analytics } from '../models/models';
+import { ImageService } from './image.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,10 @@ export class UserService {
   private musicApiUrl = 'http://192.168.1.217:5000/api/music';
   private activityApiUrl = 'http://192.168.1.217:5000/api/activity';
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private imageService: ImageService
+  ) { }
 
   private unwrapArray<T>(value: any): T[] {
     if (!value) return [];
@@ -50,8 +54,8 @@ export class UserService {
     );
   }
 
-  getUserActivity(userId: number): Observable<Activity[]> {
-    return this.http.get<any>(`${this.userApiUrl}/${userId}/analytics`).pipe(
+  getUserActivity(userId: number, count: number = 20): Observable<Activity[]> {
+    return this.http.get<any>(`${this.activityApiUrl}/user/${userId}?count=${count}`).pipe(
       map(res => this.unwrapArray<Activity>(res))
     );
   }
@@ -101,7 +105,7 @@ export class UserService {
   }
 
   getProfilePictureUrl(userId: number): string {
-    return `${this.userApiUrl}/${userId}/profile-picture`;
+    return this.imageService.getProfileImageUrl(userId);
   }
 
   // NEW: change password endpoint (JSON)

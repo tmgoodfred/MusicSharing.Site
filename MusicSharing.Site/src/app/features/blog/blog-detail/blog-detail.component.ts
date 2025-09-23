@@ -126,6 +126,26 @@ export class BlogDetailComponent implements OnInit {
     });
   }
 
+  // NEW: permissions + delete for comments
+  canDeleteComment(comment: AppComment): boolean {
+    if (!this.currentUser) return false;
+    const ownerId = (comment as any).userId ?? comment.user?.id;
+    return this.isAdmin || ownerId === this.currentUser.id;
+  }
+
+  deleteComment(comment: AppComment): void {
+    if (!this.currentUser) return;
+    if (!confirm('Delete this comment?')) return;
+
+    this.blogService.deleteComment(comment.id, this.currentUser.id, this.isAdmin).subscribe({
+      next: () => this.loadComments(),
+      error: (err) => {
+        console.error('Failed to delete comment:', err);
+        alert('Failed to delete comment. You may not have permission.');
+      }
+    });
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {

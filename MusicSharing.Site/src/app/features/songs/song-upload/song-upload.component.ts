@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { SongService } from '../../../core/services/song.service';
+import { ImageService } from '../../../core/services/image.service';
 import { TokenStorageService } from '../../../core/services/token-storage.service';
 import { CommonModule } from '@angular/common';
 
@@ -29,7 +30,8 @@ export class SongUploadComponent {
     private fb: FormBuilder,
     private songService: SongService,
     private router: Router,
-    private tokenStorage: TokenStorageService
+    private tokenStorage: TokenStorageService,
+    private imageService: ImageService
   ) {
     this.uploadForm = this.fb.group({
       title: ['', Validators.required],
@@ -105,7 +107,13 @@ export class SongUploadComponent {
     formData.append('UserId', userId.toString());
 
     this.songService.uploadSong(formData).subscribe({
-      next: (song) => this.router.navigate(['/songs', song.id]),
+      next: (song) => {
+        // Refresh artwork cache for new uploads if artwork was included
+        if (this.selectedArtworkFile) {
+          this.songService.refreshArtworkCache(song.id);
+        }
+        this.router.navigate(['/songs', song.id]);
+      },
       error: (error) => {
         this.isSubmitting = false;
         this.errorMessage = error?.error?.error || 'Upload failed. Please try again.';

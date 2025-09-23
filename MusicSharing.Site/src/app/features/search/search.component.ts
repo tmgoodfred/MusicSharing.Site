@@ -2,10 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { SongService } from '../../core/services/song.service';
 import { PlayerService } from '../../core/services/player.service';
 import { CommonModule } from '@angular/common';
-import { Song, Rating } from '../../core/models/models';
+import { Song, Rating, User } from '../../core/models/models';
+import { SearchService } from '../../core/services/search.service';
+import { SongService } from '../../core/services/song.service';
+import { ImageService } from '../../core/services/image.service';
 
 @Component({
   selector: 'app-search',
@@ -16,12 +18,15 @@ import { Song, Rating } from '../../core/models/models';
 })
 export class SearchComponent implements OnInit {
   searchForm: FormGroup;
-  results: Song[] = [];
+  songs: Song[] = [];
+  users: User[] = [];
   isLoading = false;
   selectedSort = 'relevance';
   error = '';
 
-  // Add the sortOptions array
+  // Track artwork load failures per song id
+  artworkError = new Set<number>();
+
   sortOptions = [
     { value: 'relevance', label: 'Relevance' },
     { value: 'title', label: 'Title (A-Z)' },
@@ -36,106 +41,109 @@ export class SearchComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private songService: SongService,
+    private searchService: SearchService,
     private playerService: PlayerService,
     private route: ActivatedRoute,
+    private songService: SongService,
+    private imageService: ImageService,
     private router: Router
   ) {
     this.searchForm = this.fb.group({
-      term: [''],
-      artist: [''],
-      genre: [''],
-      tags: ['']
+      q: ['']
     });
   }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      if (params['term']) {
-        this.searchForm.patchValue({
-          term: params['term'] || '',
-          artist: params['artist'] || '',
-          genre: params['genre'] || '',
-          tags: params['tags'] || ''
-        });
-
+      const q = (params['q'] ?? params['term'] ?? '').toString();
+      if (q) {
+        this.searchForm.patchValue({ q }, { emitEvent: false });
         this.search();
       }
     });
 
-    // Trigger search when form values change (with debounce)
     this.searchForm.valueChanges.pipe(
-      debounceTime(500),
-      distinctUntilChanged((prev, curr) =>
-        prev.term === curr.term &&
-        prev.artist === curr.artist &&
-        prev.genre === curr.genre &&
-        prev.tags === curr.tags
-      ),
+      debounceTime(400),
+      distinctUntilChanged((prev, curr) => prev.q === curr.q)
     ).subscribe(() => {
-      this.search();
       this.updateQueryParams();
+      this.search();
     });
+  }
+
+  artworkUrl(songId: number): string {
+    return this.songService.getArtworkUrl(songId);
   }
 
   calculateAverageRating(ratings: Rating[] | undefined): string {
     if (!ratings || ratings.length === 0) {
       return 'No ratings';
     }
-
     const sum = ratings.reduce((acc, rating) => acc + rating.ratingValue, 0);
     const average = sum / ratings.length;
     return average.toFixed(1);
   }
 
   search(): void {
+    const q: string = (this.searchForm.value.q || '').trim();
+    if (!q) {
+      this.songs = [];
+      this.users = [];
+      this.error = '';
+      this.isLoading = false;
+      this.artworkError.clear();
+      return;
+    }
+
     this.isLoading = true;
     this.error = '';
+    this.artworkError.clear();
 
-    const formValues = this.searchForm.value;
-    const tags = formValues.tags ? formValues.tags.split(',').map((tag: string) => tag.trim()) : [];
+    this.searchService.search(q).subscribe({
+      next: ({ songs, users }) => {
+        this.songs = songs;
 
-    this.songService.searchSongs(
-      formValues.term,
-      formValues.artist,
-      formValues.genre,
-      tags
-    ).subscribe({
-      next: (results) => {
-        this.results = results;
+        // Deduplicate users by id, merging API users and uploaders
+        const embeddedUsers = this.songs.map(s => s.user).filter((u): u is User => !!u);
+        this.users = this.uniqueUsers([...(users ?? []), ...embeddedUsers]);
+
         this.sortResults();
         this.isLoading = false;
       },
-      error: (error) => {
-        this.error = 'Error searching songs. Please try again.';
+      error: (err) => {
+        this.error = 'Error searching. Please try again.';
         this.isLoading = false;
-        console.error('Search error:', error);
+        console.error('Search error:', err);
       }
     });
   }
 
+  private uniqueUsers(users: User[]): User[] {
+    const map = new Map<number, User>();
+    for (const u of users) {
+      if (u && typeof u.id === 'number' && !map.has(u.id)) {
+        map.set(u.id, u);
+      }
+    }
+    return Array.from(map.values());
+  }
+
   clearSearch(): void {
-    this.searchForm.reset({
-      term: '',
-      artist: '',
-      genre: '',
-      tags: ''
-    });
-    this.results = [];
+    this.searchForm.reset({ q: '' });
+    this.songs = [];
+    this.users = [];
+    this.artworkError.clear();
+    this.updateQueryParams();
   }
 
   updateQueryParams(): void {
+    const q: string = (this.searchForm.value.q || '').trim();
     const queryParams: any = {};
-    const formValues = this.searchForm.value;
-
-    if (formValues.term) queryParams.term = formValues.term;
-    if (formValues.artist) queryParams.artist = formValues.artist;
-    if (formValues.genre) queryParams.genre = formValues.genre;
-    if (formValues.tags) queryParams.tags = formValues.tags;
+    if (q) queryParams.q = q;
 
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: queryParams,
+      queryParams,
       queryParamsHandling: 'merge'
     });
   }
@@ -157,28 +165,28 @@ export class SearchComponent implements OnInit {
   private sortResults(): void {
     switch (this.selectedSort) {
       case 'title':
-        this.results.sort((a, b) => a.title.localeCompare(b.title));
+        this.songs.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case 'titleDesc':
-        this.results.sort((a, b) => b.title.localeCompare(a.title));
+        this.songs.sort((a, b) => b.title.localeCompare(a.title));
         break;
       case 'artist':
-        this.results.sort((a, b) => a.artist.localeCompare(b.artist));
+        this.songs.sort((a, b) => a.artist.localeCompare(b.artist));
         break;
       case 'artistDesc':
-        this.results.sort((a, b) => b.artist.localeCompare(a.artist));
+        this.songs.sort((a, b) => b.artist.localeCompare(a.artist));
         break;
       case 'newest':
-        this.results.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
+        this.songs.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
         break;
       case 'oldest':
-        this.results.sort((a, b) => new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime());
+        this.songs.sort((a, b) => new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime());
         break;
       case 'mostPlayed':
-        this.results.sort((a, b) => b.playCount - a.playCount);
+        this.songs.sort((a, b) => b.playCount - a.playCount);
         break;
       case 'mostDownloaded':
-        this.results.sort((a, b) => b.downloadCount - a.downloadCount);
+        this.songs.sort((a, b) => b.downloadCount - a.downloadCount);
         break;
     }
   }
@@ -186,5 +194,13 @@ export class SearchComponent implements OnInit {
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString();
+  }
+
+  getUserInitial(username?: string): string {
+    return username ? username.charAt(0).toUpperCase() : '?';
+  }
+
+  onArtworkError(id: number): void {
+    this.artworkError.add(id);
   }
 }

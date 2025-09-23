@@ -19,24 +19,73 @@
       <div class="flex flex-col md:flex-row items-center md:items-start">
         <!-- Playlist artwork collage -->
         <div class="w-40 h-40 md:mr-6 mb-4 md:mb-0 bg-gray-300 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md flex-shrink-0">
-          <div class="grid grid-cols-2 grid-rows-2 h-full w-full">
-            <div *ngFor="let song of playlist.songs?.slice(0, 4)" class="overflow-hidden">
-              <img *ngIf="song.artworkPath"
-                   [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
-                   alt="Album art"
-                   class="h-full w-full object-cover">
-              <div *ngIf="!song.artworkPath" class="h-full w-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
-                <svg class="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-            <div *ngIf="playlist.songs?.length === 0 || !playlist.songs" class="col-span-2 row-span-2 flex items-center justify-center">
+          <ng-container [ngSwitch]="playlist.songs?.length">
+            <!-- 0 songs -->
+            <div *ngSwitchCase="0" class="w-full h-full flex items-center justify-center">
               <svg class="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
               </svg>
             </div>
-          </div>
+            <!-- 1 song -->
+            <div *ngSwitchCase="1" class="w-full h-full">
+              <img *ngIf="playlist.songs?.[0]?.artworkPath"
+                   [src]="getArtworkUrl(playlist.songs?.[0]?.id || 0)"
+                   alt="Album art"
+                   class="w-full h-full object-cover">
+              <div *ngIf="!playlist.songs?.[0]?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
+                <svg class="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                </svg>
+              </div>
+            </div>
+            <!-- 2 songs: side by side -->
+            <div *ngSwitchCase="2" class="w-full h-full grid grid-cols-2 grid-rows-1">
+              <ng-container *ngFor="let song of (playlist.songs ?? []).slice(0,2)">
+                <img *ngIf="song?.artworkPath"
+                     [src]="getArtworkUrl(song.id)"
+                     alt="Album art"
+                     class="w-full h-full object-cover">
+                <div *ngIf="!song?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
+                  <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </ng-container>
+            </div>
+            <!-- 3 songs: 2x2 grid, bottom left empty -->
+            <div *ngSwitchCase="3" class="w-full h-full grid grid-cols-2 grid-rows-2">
+              <ng-container *ngFor="let idx of [0,1,2,3]; let i = index">
+                <ng-container *ngIf="i < 3">
+                  <img *ngIf="playlist.songs?.[i]?.artworkPath"
+                       [src]="getArtworkUrl(playlist.songs?.[i]?.id || 0)"
+                       alt="Album art"
+                       class="w-full h-full object-cover">
+                  <div *ngIf="!playlist.songs?.[i]?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </ng-container>
+                <ng-container *ngIf="i === 3">
+                  <div class="w-full h-full bg-gray-200 dark:bg-gray-800"></div>
+                </ng-container>
+              </ng-container>
+            </div>
+            <!-- 4 or more songs: 2x2 grid -->
+            <div *ngSwitchDefault class="w-full h-full grid grid-cols-2 grid-rows-2">
+              <ng-container *ngFor="let song of (playlist.songs ?? []).slice(0,4)">
+                <img *ngIf="song?.artworkPath"
+                     [src]="getArtworkUrl(song.id)"
+                     alt="Album art"
+                     class="w-full h-full object-cover">
+                <div *ngIf="!song?.artworkPath" class="w-full h-full bg-gray-400 dark:bg-gray-600 flex items-center justify-center">
+                  <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </ng-container>
+            </div>
+          </ng-container>
         </div>
 
         <!-- Playlist info -->
@@ -114,7 +163,7 @@
                 <div class="flex items-center">
                   <div class="w-10 h-10 mr-3">
                     <img *ngIf="song.artworkPath"
-                         [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+                         [src]="getArtworkUrl(song.id)"
                          alt="Album art"
                          class="w-full h-full object-cover rounded">
                     <div *ngIf="!song.artworkPath"

@@ -16,7 +16,7 @@
       <div class="bg-card-background rounded-lg shadow-lg overflow-hidden">
         <div class="relative">
           <img *ngIf="song.artworkPath"
-               [src]="'http://192.168.1.217:5000/api/music/' + song.id + '/artwork'"
+               [src]="getArtworkUrl(song.id)"
                [alt]="song.title"
                class="w-full aspect-square object-cover">
           <div *ngIf="!song.artworkPath" class="w-full aspect-square bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
@@ -161,7 +161,7 @@
           </form>
         </div>
 
-        <div *ngIf="!currentUser" class="mb-6 text-center py-4 bg-gray-100 dark:bg-gray-800 rounded">
+        <div *ngIf="!currentUser" class="mb-6 text-center py-4 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded">
           <p>You need to be logged in to leave comments.</p>
           <a routerLink="/auth/login" class="text-primary hover:underline mt-2 inline-block">Log In</a>
         </div>
@@ -175,10 +175,15 @@
                   {{ getCommentAuthor(comment).charAt(0) }}
                 </div>
               </div>
-              <div class="ml-3">
+              <div class="ml-3 flex-1">
                 <div class="flex items-center">
                   <span class="font-medium">{{ getCommentAuthor(comment) }}</span>
                   <span class="ml-2 text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
+                  <button *ngIf="canDeleteComment(comment)"
+                          (click)="deleteComment(comment)"
+                          class="ml-3 text-xs text-red-600 hover:text-red-700">
+                    Delete
+                  </button>
                 </div>
                 <div class="mt-1 text-gray-700 dark:text-gray-300">
                   {{ comment.commentText }}

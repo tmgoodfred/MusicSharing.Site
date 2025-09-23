@@ -1,0 +1,38 @@
+/* Simple, reusable stat card styles that respect dark mode */
+.stat-card {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 9999px;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280; /* gray-500 */
+}
+
+:host-context(.dark) .stat-label {
+  color: #9ca3af; /* gray-400 */
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
