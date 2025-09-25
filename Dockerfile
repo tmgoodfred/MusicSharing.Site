@@ -1,16 +1,28 @@
-# Use Node 18 (works well with Angular 17 dev server)
-FROM node:18-alpine
+# Stage 1: Build Angular app
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy project
+# Copy project files
 COPY . .
 
-# Make entrypoint executable
-RUN chmod +x /app/docker-entrypoint.sh
+# Install dependencies
+RUN npm install --force
 
-# Angular dev server port
-EXPOSE 4200
+# Build Angular for production
+ARG API_URL
+RUN mkdir -p src/environments && \
+    echo "export const environment = { production: true, apiUrl: '${API_URL}' };" > src/environments/environment.prod.ts && \
+    npx ng build --configuration production
 
-# Use your entrypoint (installs deps, writes env, runs ng serve)
-ENTRYPOINT ["/app/docker-entrypoint.sh"]
+# Stage 2: Serve with Nginx
+FROM nginx:alpine
+
+# Copy built Angular files to Nginx
+COPY --from=build /app/MusicSharing.Site/dist/music-sharing.site /usr/share/nginx/html
+
+# Expose port
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

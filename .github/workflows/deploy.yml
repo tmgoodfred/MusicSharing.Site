@@ -40,12 +40,14 @@ jobs:
             type=sha,format=long
             latest
 
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           file: ./Dockerfile
           push: true
+          build-args: |
+            API_URL=${{ secrets.API_URL }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -94,8 +96,7 @@ jobs:
               docker rm music-sharing-app || true
               docker run -d \
                 --name music-sharing-app \
-                -p 4526:4200 \
-                -e API_URL='${{ secrets.API_URL }}' \
+                -p 4526:80 \
                 --restart unless-stopped \
                 ${IMAGE}:latest
               sleep 5
