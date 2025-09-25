@@ -14,17 +14,17 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Compute image ref (lowercase)
         id: img
         run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -32,16 +32,16 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
-          images: ${{ steps.img.outputs.image }}
-          tags: |
-            type=ref,event=branch
-            type=sha,format=long
-            latest
+            images: ${{ steps.img.outputs.image }}
+            tags: |
+              type=ref,event=branch
+              type=sha,format=long
+              latest
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
+      - name: Build and push image
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
@@ -69,39 +69,58 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
 
-      - name: Test SSH connection
-        shell: bash
-        run: |
-          echo "Testing SSH connection..."
-          PORT="${{ secrets.SSH_PORT }}"
-          ssh -vvv -i ~/.ssh/deploy_key \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            ${PORT:+-p "$PORT"} \
-            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" "echo Connection successful"
-
       - name: Deploy to server
         shell: bash
+        env:
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          IMAGE: ${{ steps.img.outputs.image }}
+          CONTAINER_NAME: music-sharing-app
+          HOST_HTML_DIR: /mnt/user/appdata/musicsharing/html
+          HOST_PORT: 4526
         run: |
-          PORT="${{ secrets.SSH_PORT }}"
-          IMAGE="${{ steps.img.outputs.image }}"
-          ssh -i ~/.ssh/deploy_key \
-            -o IdentitiesOnly=yes \
-            -o StrictHostKeyChecking=yes \
-            ${PORT:+-p "$PORT"} \
-            "${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}" "
-              set -e
-              docker pull ${IMAGE}:latest
-              docker stop music-sharing-app || true
-              docker rm music-sharing-app || true
-              docker run -d \
-                --name music-sharing-app \
-                -p 4526:80 \
-                --restart unless-stopped \
-                ${IMAGE}:latest
-              sleep 5
-              docker logs --tail=200 music-sharing-app || true
-            "
+          set -e
+          SSH_PORT_OPT=""
+          if [ -n "$SSH_PORT" ]; then SSH_PORT_OPT="-p $SSH_PORT"; fi
+
+          echo "Connecting to $SSH_USER@$SERVER_IP ..."
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes $SSH_PORT_OPT "$SSH_USER@$SERVER_IP" bash -s <<'REMOTE'
+            set -euo pipefail
+
+            IMAGE="${IMAGE}"
+            CONTAINER_NAME="${CONTAINER_NAME}"
+            HOST_HTML_DIR="${HOST_HTML_DIR}"
+            HOST_PORT="${HOST_PORT}"
+
+            echo "Pulling image: \${IMAGE}:latest"
+            docker pull "\${IMAGE}:latest"
+
+            echo "Stopping/removing old container (if any)"
+            docker stop "\${CONTAINER_NAME}" 2>/dev/null || true
+            docker rm "\${CONTAINER_NAME}" 2>/dev/null || true
+
+            echo "Preparing host directory: \${HOST_HTML_DIR}"
+            mkdir -p "\${HOST_HTML_DIR}"
+            # Optional (uncomment to fully clean old assets):
+            # rm -rf "\${HOST_HTML_DIR:?}/"*
+
+            echo "Starting new container"
+            docker run -d \
+              --name "\${CONTAINER_NAME}" \
+              -p "\${HOST_PORT}:80" \
+              -v "\${HOST_HTML_DIR}":/usr/share/nginx/html \
+              --restart unless-stopped \
+              "\${IMAGE}:latest"
+
+            echo "Waiting for container (5s)"
+            sleep 5
+            echo "Recent logs:"
+            docker logs --tail=100 "\${CONTAINER_NAME}" || true
+
+            echo "Listing deployed files (host bind mount):"
+            ls -1 "\${HOST_HTML_DIR}" | head -n 25 || true
+          REMOTE
 
   notify-discord:
     needs: deploy-to-server
