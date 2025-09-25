@@ -1,17 +1,19 @@
 #!/bin/sh
 set -e
-cd /app/MusicSharing.Site
 
-echo "Installing dependencies..."
-npm install --force
+ORIGIN="/opt/site"
+TARGET="/usr/share/nginx/html"
 
-if [ -n "$API_URL" ]; then
-  echo "Configuring API URL: $API_URL"
-  mkdir -p src/environments
-  echo "export const environment = { production: false, apiUrl: '$API_URL' };" > src/environments/environment.ts
-  echo "export const environment = { production: true,  apiUrl: '$API_URL' };" > src/environments/environment.prod.ts
+if [ ! -d "$ORIGIN" ]; then
+  echo "ERROR: Origin directory $ORIGIN missing."
+  exit 1
 fi
 
-PORT="${PORT:-4200}"
-echo "Starting Angular application on port ${PORT}..."
-exec npm start -- --host 0.0.0.0 --port "${PORT}" --disable-host-check
+if [ -z "$(ls -A "$TARGET")" ]; then
+  echo "Populating static assets into mounted directory..."
+  cp -R "${ORIGIN}/." "$TARGET/"
+else
+  echo "Target already populated; skipping copy."
+fi
+
+exec nginx -g 'daemon off;'
