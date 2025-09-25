@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 })
 export class ImageService {
   private imageCache = new Map<string, string>();
-  private apiBaseUrl = 'http://192.168.1.217:5000/api';
+  private apiBaseUrl = 'https://api.music-sharing.online/api';
 
   getProfileImageUrl(userId: number, forceRefresh = false): string {
     const baseUrl = `${this.apiBaseUrl}/user/${userId}/profile-picture`;

@@ -7,7 +7,7 @@ import { User } from '../models/models';
   providedIn: 'root'
 })
 export class FollowerService {
-  private apiUrl = 'http://192.168.1.217:5000/api/follower';
+  private apiUrl = 'https://api.music-sharing.online/api/follower';
 
   constructor(private http: HttpClient) { }
 

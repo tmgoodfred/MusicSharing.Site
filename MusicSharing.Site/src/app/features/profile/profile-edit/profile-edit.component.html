@@ -14,7 +14,7 @@
           <div class="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center">
             <!-- Show preview if chosen; otherwise show current profile picture if available -->
             <img *ngIf="profilePreview || currentUser?.profilePicturePath"
-                 [src]="profilePreview || ('http://192.168.1.217:5000/api/user/' + currentUser?.id + '/profile-picture')"
+                 [src]="profilePreview || ('https://api.music-sharing.online/api/user/' + currentUser?.id + '/profile-picture')"
                  class="w-full h-full object-cover"
                  alt="Profile picture">
             <div *ngIf="!(profilePreview || currentUser?.profilePicturePath)" class="text-gray-500">

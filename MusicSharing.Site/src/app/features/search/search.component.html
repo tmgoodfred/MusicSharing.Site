@@ -59,7 +59,7 @@
             <div class="flex-shrink-0">
               <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
                 <img *ngIf="user.profilePicturePath"
-                     [src]="'http://192.168.1.217:5000/api/user/' + user.id + '/profile-picture'"
+                     [src]="'https://api.music-sharing.online/api/user/' + user.id + '/profile-picture'"
                      alt="{{ user.username }}"
                      class="w-full h-full object-cover">
                 <span *ngIf="!user.profilePicturePath">{{ getUserInitial(user.username) }}</span>

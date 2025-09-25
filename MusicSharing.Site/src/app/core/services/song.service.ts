@@ -9,9 +9,9 @@ import { ImageService } from './image.service';
   providedIn: 'root'
 })
 export class SongService {
-  private apiUrl = 'http://192.168.1.217:5000/api/music';
-  private commentApiUrl = 'http://192.168.1.217:5000/api/comment';
-  private ratingApiUrl = 'http://192.168.1.217:5000/api/rating';
+  private apiUrl = 'https://api.music-sharing.online/api/music';
+  private commentApiUrl = 'https://api.music-sharing.online/api/comment';
+  private ratingApiUrl = 'https://api.music-sharing.online/api/rating';
 
   constructor(
     private http: HttpClient,

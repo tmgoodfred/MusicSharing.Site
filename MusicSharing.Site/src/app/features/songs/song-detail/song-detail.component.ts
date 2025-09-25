@@ -200,7 +200,7 @@ export class SongDetailComponent implements OnInit {
 
   downloadSong(): void {
     if (this.song) {
-      window.location.href = `http://192.168.1.217:5000/api/music/${this.song.id}/download`;
+      window.location.href = `https://api.music-sharing.online/api/music/${this.song.id}/download`;
     }
   }
 

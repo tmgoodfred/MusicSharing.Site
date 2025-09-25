@@ -11,8 +11,8 @@ import { TokenStorageService } from './token-storage.service';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://192.168.1.217:5000/api/user';
-  private userUrl = 'http://192.168.1.217:5000/api/user';
+  private apiUrl = 'https://api.music-sharing.online/api/user';
+  private userUrl = 'https://api.music-sharing.online/api/user';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
   private jwtHelper = new JwtHelperService();
