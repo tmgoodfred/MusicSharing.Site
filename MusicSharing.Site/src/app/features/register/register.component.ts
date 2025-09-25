@@ -29,36 +29,33 @@ export class RegisterComponent {
     private authService: AuthService,
     private router: Router
   ) {
-    // Create the form with individual controls
     this.registerForm = this.fb.group({
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, Validators.minLength(8), this.passwordComplexityValidator()]],
       confirmPassword: ['', [Validators.required]]
     });
-
-    // Add the validator to the form after creation
     this.registerForm.addValidators(this.passwordMatchValidator());
   }
 
-  // Updated to return a ValidatorFn
+  passwordComplexityValidator(): ValidatorFn {
+    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$/;
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value = control.value as string;
+      if (!value) return null;
+      return regex.test(value) ? null : { passwordComplexity: true };
+    };
+  }
+
   passwordMatchValidator(): ValidatorFn {
     return (formGroup: AbstractControl): ValidationErrors | null => {
       const passwordControl = formGroup.get('password');
       const confirmPasswordControl = formGroup.get('confirmPassword');
-
-      if (!passwordControl || !confirmPasswordControl) {
-        return null;
-      }
-
-      const password = passwordControl.value;
-      const confirmPassword = confirmPasswordControl.value;
-
-      return password === confirmPassword ? null : { passwordMismatch: true };
+      if (!passwordControl || !confirmPasswordControl) return null;
+      return passwordControl.value === confirmPasswordControl.value ? null : { passwordMismatch: true };
     };
   }
 
-  // Rest of your component remains the same...
   onProfilePictureSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length) {
@@ -112,13 +109,9 @@ export class RegisterComponent {
 
     this.authService.register(username, email, password, this.selectedProfilePicture).subscribe({
       next: () => {
-        this.authService.login(email, password).subscribe({
-          next: () => this.router.navigate(['/']),
-          error: () => {
-            this.isSubmitting = false;
-            this.errorMessage = 'Registration successful but login failed. Please login manually.';
-          }
-        });
+        this.isSubmitting = false;
+        // Redirect to login with banner instructing to verify email
+        this.router.navigate(['/auth/login'], { queryParams: { registered: 1 } });
       },
       error: (error) => {
         this.isSubmitting = false;

@@ -2,9 +2,10 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  role: UserRole;
+  role: string; // changed: API returns Role as string, e.g., "Admin"
   createdAt: string;
-  profilePicturePath?: string; // NEW
+  profilePicturePath?: string;
+  emailConfirmed: boolean; // added
 }
 
 export interface UserUpdate {

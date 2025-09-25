@@ -32,7 +32,7 @@
         <div class="text-center mb-6">
           <h1 class="text-xl font-bold mb-1">{{ profileUser.username }}</h1>
           <p class="text-gray-500 text-sm">Joined {{ formatDate(profileUser.createdAt) }}</p>
-          <span *ngIf="profileUser.role === 1" class="inline-block mt-2 px-2 py-1 bg-primary text-white text-xs rounded">Admin</span>
+          <span *ngIf="profileUser.role === 'Admin'" class="inline-block mt-2 px-2 py-1 bg-primary text-white text-xs rounded">Admin</span>
         </div>
 
         <!-- Actions -->

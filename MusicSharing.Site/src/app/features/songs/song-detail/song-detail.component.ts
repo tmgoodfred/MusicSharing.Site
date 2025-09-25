@@ -62,13 +62,19 @@ export class SongDetailComponent implements OnInit {
 
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      this.isAdmin = user?.role === UserRole.Admin;
+      this.isAdmin = this.isAdminRole(user?.role);
       this.updateIsOwner();
     });
   }
 
   ngOnInit(): void {
     this.loadSong();
+  }
+
+  private isAdminRole(role: string | number | null | undefined): boolean {
+    if (role == null) return false;
+    if (typeof role === 'string') return role.toLowerCase() === 'admin';
+    return role === UserRole.Admin || role === 1;
   }
 
   private updateIsOwner(): void {

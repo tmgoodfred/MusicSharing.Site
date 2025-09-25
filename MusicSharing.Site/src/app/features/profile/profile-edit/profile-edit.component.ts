@@ -32,6 +32,8 @@ export class ProfileEditComponent implements OnInit {
   imageChangedEvent: any = null;
   croppedImageBase64 = '';
 
+  private passwordComplexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$/;
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
@@ -112,6 +114,22 @@ export class ProfileEditComponent implements OnInit {
     return new File([u8], filename, { type: mime });
   }
 
+  private validateNewPassword(newPwd: string, confirm: string): boolean {
+    if (!newPwd || newPwd.length < 8) {
+      this.error = 'New password must be at least 8 characters.';
+      return false;
+    }
+    if (!this.passwordComplexityRegex.test(newPwd)) {
+      this.error = 'Password must include uppercase, lowercase, and a number or symbol.';
+      return false;
+    }
+    if (newPwd !== confirm) {
+      this.error = 'New password and confirmation do not match.';
+      return false;
+    }
+    return true;
+  }
+
   onSubmit(): void {
     if (this.profileForm.invalid || this.isSubmitting || !this.currentUser) return;
 
@@ -124,20 +142,13 @@ export class ProfileEditComponent implements OnInit {
     // Separate validation for password change if enabled
     let shouldUpdatePassword = false;
     if (this.changePassword) {
-      const newPwd = this.profileForm.value.newPassword?.trim();
-      const confirm = this.profileForm.value.confirmPassword?.trim();
+      const newPwd = (this.profileForm.value.newPassword || '').trim();
+      const confirm = (this.profileForm.value.confirmPassword || '').trim();
 
-      if (!newPwd || newPwd.length < 6) {
-        this.error = 'New password must be at least 6 characters.';
-        return;
+      if (!this.validateNewPassword(newPwd, confirm)) {
+        return; // error set in validation method
       }
 
-      if (newPwd !== confirm) {
-        this.error = 'New password and confirmation do not match.';
-        return;
-      }
-
-      // Only set to true if we have a valid password to update
       shouldUpdatePassword = true;
     }
 

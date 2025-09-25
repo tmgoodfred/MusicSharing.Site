@@ -123,4 +123,22 @@ export class UserService {
       map(res => this.unwrapArray<Activity>(res))
     );
   }
+
+  // ========= Email verification & password reset =========
+
+  requestEmailVerification(usernameOrEmail: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.userApiUrl}/request-email-verification`, { usernameOrEmail });
+  }
+
+  verifyEmail(token: string): Observable<void> {
+    return this.http.post<void>(`${this.userApiUrl}/verify-email`, { token });
+  }
+
+  forgotPassword(usernameOrEmail: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.userApiUrl}/forgot-password`, { usernameOrEmail });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<void> {
+    return this.http.post<void>(`${this.userApiUrl}/reset-password`, { token, newPassword });
+  }
 }

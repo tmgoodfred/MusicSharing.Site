@@ -92,14 +92,27 @@
 
       <!-- Password fields (only visible if toggled) -->
       <div *ngIf="changePassword" class="border-t border-gray-200 dark:border-gray-700 my-4 pt-4">
+        <div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
+          Password must be at least 8 characters and include uppercase, lowercase, and a number or symbol.
+        </div>
         <div class="mb-4">
           <label for="newPassword" class="block mb-2 font-medium">New Password</label>
-          <input type="password" id="newPassword" formControlName="newPassword" class="w-full px-3 py-2 border rounded">
+          <input type="password" id="newPassword" formControlName="newPassword" class="w-full px-3 py-2 border rounded"
+                 [ngClass]="{'border-red-500': profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched}">
+          <div *ngIf="profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched" class="text-red-500 mt-1">
+            <span *ngIf="profileForm.get('newPassword')?.errors?.['required']">New password is required</span>
+            <span *ngIf="profileForm.get('newPassword')?.errors?.['minlength']">Password must be at least 8 characters</span>
+          </div>
         </div>
 
         <div class="mb-6">
           <label for="confirmPassword" class="block mb-2 font-medium">Confirm New Password</label>
-          <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full px-3 py-2 border rounded">
+          <input type="password" id="confirmPassword" formControlName="confirmPassword" class="w-full px-3 py-2 border rounded"
+                 [ngClass]="{'border-red-500': profileForm.get('confirmPassword')?.invalid && profileForm.get('confirmPassword')?.touched}">
+          <div *ngIf="profileForm.get('confirmPassword')?.invalid && profileForm.get('confirmPassword')?.touched" class="text-red-500 mt-1">
+            <span *ngIf="profileForm.get('confirmPassword')?.errors?.['required']">Please confirm your new password</span>
+            <span *ngIf="profileForm.get('confirmPassword')?.errors?.['mismatch']">Passwords do not match</span>
+          </div>
         </div>
       </div>
 

@@ -42,8 +42,14 @@ export class BlogDetailComponent implements OnInit {
     this.loadBlogPost();
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      this.isAdmin = user?.role === UserRole.Admin;
+      this.isAdmin = this.isAdminRole(user?.role);
     });
+  }
+
+  private isAdminRole(role: string | number | null | undefined): boolean {
+    if (role == null) return false;
+    if (typeof role === 'string') return role.toLowerCase() === 'admin';
+    return role === UserRole.Admin || role === 1;
   }
 
   loadBlogPost(): void {

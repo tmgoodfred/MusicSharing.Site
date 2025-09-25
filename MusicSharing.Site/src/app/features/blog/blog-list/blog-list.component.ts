@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { BlogService } from '../../../core/services/blog.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { BlogPost, User, UserRole } from '../../../core/models/models';
+import { BlogPost, User } from '../../../core/models/models';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -29,7 +29,7 @@ export class BlogListComponent implements OnInit {
     this.loadBlogPosts();
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
-      this.isAdmin = user?.role === UserRole.Admin;
+      this.isAdmin = (user?.role?.toString().toLowerCase() === 'admin');
     });
   }
 

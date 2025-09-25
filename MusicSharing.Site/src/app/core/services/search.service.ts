@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, map } from 'rxjs';
-import { Song, User, UserRole } from '../models/models';
+import { Song, User } from '../models/models';
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +19,8 @@ export class SearchService {
   }
 
   private normalizeUser(raw: any): User {
-    const roleStr = (raw?.Role ?? raw?.role ?? '').toString().toLowerCase();
-    const role = roleStr === 'admin' ? UserRole.Admin : UserRole.User;
+    const roleRaw = raw?.Role ?? raw?.role;
+    const role = typeof roleRaw === 'string' ? roleRaw : (roleRaw === 1 ? 'Admin' : 'User');
 
     return {
       id: raw?.Id ?? raw?.id,
@@ -28,7 +28,8 @@ export class SearchService {
       email: raw?.Email ?? raw?.email,
       role,
       createdAt: raw?.CreatedAt ?? raw?.createdAt,
-      profilePicturePath: raw?.ProfilePicturePath ?? raw?.profilePicturePath
+      profilePicturePath: raw?.ProfilePicturePath ?? raw?.profilePicturePath,
+      emailConfirmed: raw?.EmailConfirmed ?? raw?.emailConfirmed ?? true
     } as User;
   }
 
@@ -45,7 +46,7 @@ export class SearchService {
       uploadDate: raw?.UploadDate ?? raw?.uploadDate,
       playCount: raw?.PlayCount ?? raw?.playCount ?? 0,
       downloadCount: raw?.DownloadCount ?? raw?.downloadCount ?? 0,
-      filePath: '', // not supplied by search DTO
+      filePath: '',
       artworkPath: raw?.ArtworkPath ?? raw?.artworkPath,
       user,
       userId: user?.id

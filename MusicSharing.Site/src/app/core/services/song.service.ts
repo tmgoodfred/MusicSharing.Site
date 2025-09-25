@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Song, User, Comment, Rating, UserRole } from '../models/models';
+import { Song, User, Comment, Rating } from '../models/models';
 import { map } from 'rxjs/operators';
 import { ImageService } from './image.service';
 
@@ -74,7 +74,6 @@ export class SongService {
     if (artist) params = params.set('artist', artist);
     if (genre) params = params.set('genre', genre);
     if (uploaderOrUser) {
-      // Backend may accept either 'uploader' or 'user'. Send both to be safe.
       params = params.set('uploader', uploaderOrUser);
       params = params.set('user', uploaderOrUser);
     }
@@ -108,7 +107,6 @@ export class SongService {
         const rows = this.unwrapArray<any>(res);
         const usersMap = new Map<number, User>();
         const songs = rows.map(item => {
-          // Uploader can be 'Uploader' or 'uploader'
           const uploaderRaw = item?.Uploader ?? item?.uploader ?? null;
           let uploaderUser: User | undefined;
 
@@ -118,7 +116,6 @@ export class SongService {
             uploaderUser = mapped;
           }
 
-          // Map DTO fields (Title/Artist/Genre/Tags/UploadDate/PlayCount/DownloadCount)
           const rawSong = {
             id: item.Id ?? item.id,
             title: item.Title ?? item.title,
@@ -128,7 +125,6 @@ export class SongService {
             uploadDate: item.UploadDate ?? item.uploadDate,
             playCount: item.PlayCount ?? item.playCount ?? 0,
             downloadCount: item.DownloadCount ?? item.downloadCount ?? 0,
-            // Preserve any present fields like filePath/artworkPath if server includes them
             filePath: item.filePath ?? item.FilePath,
             artworkPath: item.artworkPath ?? item.ArtworkPath,
             categories: item.Categories ?? item.categories ?? [],
@@ -148,16 +144,17 @@ export class SongService {
   }
 
   private normalizeUser(raw: any): User {
-    const roleStr = (raw.Role ?? raw.role ?? '').toString();
-    const normalizedRole = roleStr.toLowerCase() === 'admin' ? UserRole.Admin : UserRole.User;
+    const roleRaw = raw?.Role ?? raw?.role;
+    const role = typeof roleRaw === 'string' ? roleRaw : (roleRaw === 1 ? 'Admin' : 'User');
 
     return {
       id: raw.Id ?? raw.id,
       username: raw.Username ?? raw.username,
       email: raw.Email ?? raw.email,
-      role: normalizedRole,
+      role,
       createdAt: raw.CreatedAt ?? raw.createdAt,
-      profilePicturePath: raw.ProfilePicturePath ?? raw.profilePicturePath
+      profilePicturePath: raw.ProfilePicturePath ?? raw.profilePicturePath,
+      emailConfirmed: raw.EmailConfirmed ?? raw.emailConfirmed ?? true
     } as User;
   }
 
@@ -183,12 +180,10 @@ export class SongService {
     );
   }
 
-  // NEW: get a single comment by song + commentId
   getSongCommentById(songId: number, commentId: number) {
     return this.http.get<Comment>(`${this.commentApiUrl}/song/${songId}/${commentId}`);
   }
 
-  // NEW: get a single blog comment by blogPost + commentId
   getBlogCommentById(blogPostId: number, commentId: number) {
     return this.http.get<Comment>(`${this.commentApiUrl}/blog/${blogPostId}/${commentId}`);
   }
@@ -197,7 +192,6 @@ export class SongService {
     return this.http.post<Comment>(`${this.commentApiUrl}`, comment);
   }
 
-  // NEW: delete a comment by id with userId/isAdmin authorization
   deleteComment(commentId: number, userId: number, isAdmin: boolean): Observable<any> {
     const params = new HttpParams()
       .set('userId', userId.toString())
@@ -218,12 +212,10 @@ export class SongService {
     return this.http.post<Rating>(`${this.ratingApiUrl}`, rating);
   }
 
-  // Add this new method to get song artwork URL
   getArtworkUrl(songId: number, forceRefresh = false): string {
     return this.imageService.getSongArtworkUrl(songId, forceRefresh);
   }
 
-  // When uploading or updating a song with new artwork, call this to refresh the cache
   refreshArtworkCache(songId: number): void {
     this.imageService.clearImageCache('artwork', songId);
   }

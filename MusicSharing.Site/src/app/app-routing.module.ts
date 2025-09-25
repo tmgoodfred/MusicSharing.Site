@@ -1,6 +1,11 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './features/home/home.component';
+import { LoginComponent } from './features/login/login.component';
+import { RegisterComponent } from './features/register/register.component';
+import { VerifyEmailComponent } from './features/register/verify-email/verify-email.component';
+import { ResetPasswordComponent } from './features/register/reset-password/reset-password.component';
+import { ForgotPasswordComponent } from './features/register/forgot-password/forgot-password.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -32,6 +37,11 @@ const routes: Routes = [
     path: 'analytics',
     loadChildren: () => import('./features/analytics/analytics.module').then(m => m.AnalyticsModule)
   },
+  { path: 'auth/login', component: LoginComponent },
+  { path: 'auth/register', component: RegisterComponent },
+  { path: 'auth/verify-email', component: VerifyEmailComponent },
+  { path: 'auth/reset-password', component: ResetPasswordComponent },
+  { path: 'auth/forgot-password', component: ForgotPasswordComponent },
   { path: '**', redirectTo: '' }
 ];
 

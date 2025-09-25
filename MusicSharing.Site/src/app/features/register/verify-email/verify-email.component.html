@@ -1,0 +1,8 @@
+<div class="max-w-md mx-auto mt-10 bg-card-background p-8 rounded-lg shadow text-center">
+  <h2 class="text-2xl font-semibold mb-4">Email Verification</h2>
+  <p *ngIf="status === 'verifying'">Verifying...</p>
+  <p *ngIf="status !== 'verifying'">{{ message }}</p>
+  <div class="mt-4" *ngIf="status === 'error'">
+    <a routerLink="/auth/login" class="btn-primary inline-block">Back to Login</a>
+  </div>
+</div>
