@@ -1,10 +1,11 @@
-# Stage 1: Build Angular app
-FROM node:18-alpine AS build
+# Stage 1: Build Angular
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy only the Angular project folder
+COPY MusicSharing.Site/package*.json ./
+COPY MusicSharing.Site/ ./
 
 # Install dependencies
 RUN npm install --force
@@ -12,14 +13,14 @@ RUN npm install --force
 # Build Angular for production
 ARG API_URL
 RUN mkdir -p src/environments && \
-    echo "export const environment = { production: true, apiUrl: '${API_URL}' };" > src/environments/environment.prod.ts && \
-    npx ng build --configuration production
+    echo "export const environment = { production: true, apiUrl: '$API_URL' };" > src/environments/environment.prod.ts
+RUN npm run build -- --output-path=dist --configuration production
 
 # Stage 2: Serve with Nginx
 FROM nginx:alpine
 
-# Copy built Angular files to Nginx
-COPY --from=build /app/MusicSharing.Site/dist/music-sharing.site /usr/share/nginx/html
+# Copy Angular build output to Nginx html folder
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expose port
 EXPOSE 80
