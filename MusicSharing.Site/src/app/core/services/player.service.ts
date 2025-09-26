@@ -55,7 +55,7 @@ export class PlayerService {
     }
 
     this.sound = new Howl({
-      src: [`https://api.music-sharing.online/api/music/${song.id}/stream`],
+      src: [`https://music-sharing.online/api/music/${song.id}/stream`],
       html5: true,
       volume: this.state.value.volume,
       onload: () => {
