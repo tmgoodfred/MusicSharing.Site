@@ -8,13 +8,16 @@ ARG API_URL
 ENV API_URL=${API_URL}
 RUN mkdir -p src/environments && \
     printf "export const environment = { production: true, apiUrl: '%s' };\n" "$API_URL" > src/environments/environment.prod.ts
-RUN npm run build -- --configuration production --output-path=dist/app
+RUN npm run build -- --configuration production --output-path=dist/music-sharing.site
+
+# Copy files from browser folder to parent output directory
+RUN cp -r dist/music-sharing.site/browser/* dist/music-sharing.site/
 
 # ---------- Stage 2: Runtime (Nginx) ----------
 FROM nginx:1.27-alpine
 
 # Store built assets in a staging directory
-COPY --from=builder /app/dist/app /opt/site
+COPY --from=builder /app/dist/music-sharing.site /opt/site
 
 # Prepare (empty) target directory for possible bind mount
 RUN rm -rf /usr/share/nginx/html/* && mkdir -p /usr/share/nginx/html
