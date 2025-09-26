@@ -37,6 +37,7 @@ const routes: Routes = [
     path: 'analytics',
     loadChildren: () => import('./features/analytics/analytics.module').then(m => m.AnalyticsModule)
   },
+  { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'auth/login', component: LoginComponent },
   { path: 'auth/register', component: RegisterComponent },
   { path: 'auth/verify-email', component: VerifyEmailComponent },
