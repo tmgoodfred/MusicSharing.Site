@@ -8,8 +8,8 @@ import { HttpParams } from '@angular/common/http';
   providedIn: 'root'
 })
 export class BlogService {
-  private apiUrl = 'https://api.music-sharing.online/api/blog';
-  private commentApiUrl = 'https://api.music-sharing.online/api/comment';
+  private apiUrl = 'https://music-sharing.online/api/blog';
+  private commentApiUrl = 'https://music-sharing.online/api/comment';
 
   constructor(private http: HttpClient) { }
 

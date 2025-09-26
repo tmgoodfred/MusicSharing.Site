@@ -7,7 +7,7 @@ import { Song, User } from '../models/models';
   providedIn: 'root'
 })
 export class SearchService {
-  private apiUrl = 'https://api.music-sharing.online/api/search';
+  private apiUrl = 'https://music-sharing.online/api/search';
 
   constructor(private http: HttpClient) { }
 

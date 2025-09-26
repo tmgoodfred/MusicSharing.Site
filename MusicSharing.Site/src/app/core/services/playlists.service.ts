@@ -8,7 +8,7 @@ import { Playlist, Song } from '../models/models';
 })
 export class PlaylistService {
   // Match backend controller route (singular)
-  private apiUrl = 'https://api.music-sharing.online/api/playlist';
+  private apiUrl = 'https://music-sharing.online/api/playlist';
 
   constructor(private http: HttpClient) { }
 

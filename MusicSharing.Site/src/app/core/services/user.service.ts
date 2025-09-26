@@ -8,10 +8,10 @@ import { ImageService } from './image.service';
   providedIn: 'root'
 })
 export class UserService {
-  private userApiUrl = 'https://api.music-sharing.online/api/user';
-  private followerApiUrl = 'https://api.music-sharing.online/api/follower';
-  private musicApiUrl = 'https://api.music-sharing.online/api/music';
-  private activityApiUrl = 'https://api.music-sharing.online/api/activity';
+  private userApiUrl = 'https://music-sharing.online/api/user';
+  private followerApiUrl = 'https://music-sharing.online/api/follower';
+  private musicApiUrl = 'https://music-sharing.online/api/music';
+  private activityApiUrl = 'https://music-sharing.online/api/activity';
 
   constructor(
     private http: HttpClient,
