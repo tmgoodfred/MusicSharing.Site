@@ -9,11 +9,8 @@ if [ ! -d "$ORIGIN" ]; then
   exit 1
 fi
 
-if [ -z "$(ls -A "$TARGET")" ]; then
-  echo "Populating static assets into mounted directory..."
-  cp -R "${ORIGIN}/." "$TARGET/"
-else
-  echo "Target already populated; skipping copy."
-fi
+echo "Clearing and copying static assets into mounted directory..."
+rm -rf "$TARGET"/*
+cp -R "${ORIGIN}/." "$TARGET/"
 
 exec nginx -g 'daemon off;'

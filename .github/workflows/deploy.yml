@@ -87,19 +87,19 @@ jobs:
           [ -n "$SSH_PORT" ] && SSH_PORT_OPT="-p $SSH_PORT"
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes $SSH_PORT_OPT "$SSH_USER@$SERVER_IP" bash -s -- <<EOF
           set -euo pipefail
-          
+
           echo "Pulling image: ${IMAGE}:latest"
           docker pull "${IMAGE}:latest"
-          
+
           echo "Stopping/removing old container (if any)"
           docker stop "${CONTAINER_NAME}" 2>/dev/null || true
           docker rm "${CONTAINER_NAME}" 2>/dev/null || true
-          
+
           echo "Preparing host dir: ${HOST_HTML_DIR}"
           mkdir -p "${HOST_HTML_DIR}"
-          # Optional: uncomment to remove stale old hashed bundle files each deploy
-          # rm -rf "${HOST_HTML_DIR:?}/"*
-          
+          # Remove stale old hashed bundle files each deploy
+          rm -rf "${HOST_HTML_DIR:?}/"*
+
           echo "Starting container with bind mount"
           docker run -d \
             --name "${CONTAINER_NAME}" \
@@ -107,7 +107,7 @@ jobs:
             -v "${HOST_HTML_DIR}":/usr/share/nginx/html \
             --restart unless-stopped \
             "${IMAGE}:latest"
-          
+
           echo "Waiting 5s..."
           sleep 5
           echo "Top-level deployed files:"
