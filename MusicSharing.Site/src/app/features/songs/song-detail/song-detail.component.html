@@ -30,8 +30,8 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
             </svg>
           </button>
-          <!-- Owner-only: Edit/Delete buttons -->
-          <div *ngIf="isOwner" class="absolute top-4 right-4 flex space-x-2">
+          <!-- Owner/Admin: Edit/Delete buttons -->
+          <div *ngIf="isOwner || isAdmin" class="absolute top-4 right-4 flex space-x-2">
             <button (click)="openEditModal()"
                     class="bg-white/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-200 rounded px-3 py-1 text-sm shadow hover:bg-white dark:hover:bg-gray-800 transition">
               Edit
