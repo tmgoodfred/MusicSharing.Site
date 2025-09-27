@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+<div class="container mx-auto py-8">
+  <h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+
+  <div *ngIf="loading" class="flex justify-center py-10">
+    <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+
+  <div *ngIf="error" class="bg-red-100 dark:bg-red-900 border border-red-400 text-red-700 dark:text-red-200 px-4 py-3 rounded mb-4">
+    {{ error }}
+  </div>
+  <div *ngIf="actionMessage" class="bg-blue-100 dark:bg-blue-900 border border-blue-400 text-blue-800 dark:text-blue-100 px-4 py-3 rounded mb-4">
+    {{ actionMessage }}
+  </div>
+
+  <div *ngIf="dashboard && !loading">
+    <!-- USERS -->
+    <div class="bg-card-background rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Users</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 text-left">ID</th>
+              <th class="px-4 py-2 text-left">Username</th>
+              <th class="px-4 py-2 text-left">Email</th>
+              <th class="px-4 py-2 text-left">Role</th>
+              <th class="px-4 py-2 text-left">Created</th>
+              <th class="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of dashboard.users">
+              <td class="px-4 py-2">{{ user.id }}</td>
+              <td class="px-4 py-2">{{ user.username }}</td>
+              <td class="px-4 py-2">{{ user.email }}</td>
+              <td class="px-4 py-2">{{ user.role }}</td>
+              <td class="px-4 py-2">{{ user.createdAt | date:'short' }}</td>
+              <td class="px-4 py-2 space-x-2">
+                <button class="btn-secondary" (click)="viewUser(user)">View</button>
+                <button class="btn-danger" (click)="deleteUser(user)">Delete</button>
+                <button *ngIf="user.role !== 'Admin'" class="btn-primary" (click)="promoteUser(user)">Promote to Admin</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SONGS -->
+    <div class="bg-card-background rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Songs</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 text-left">ID</th>
+              <th class="px-4 py-2 text-left">Title</th>
+              <th class="px-4 py-2 text-left">Artist</th>
+              <th class="px-4 py-2 text-left">Uploader</th>
+              <th class="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let song of dashboard.songs">
+              <td class="px-4 py-2">{{ song.id }}</td>
+              <td class="px-4 py-2">{{ song.title }}</td>
+              <td class="px-4 py-2">{{ song.artist }}</td>
+              <td class="px-4 py-2">{{ song.uploaderUsername || song.user?.username || '-' }}</td>
+              <td class="px-4 py-2 space-x-2">
+                <button class="btn-secondary" (click)="viewSong(song)">View</button>
+                <button class="btn-danger" (click)="deleteSong(song)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BLOG POSTS -->
+    <div class="bg-card-background rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Blog Posts</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 text-left">ID</th>
+              <th class="px-4 py-2 text-left">Title</th>
+              <th class="px-4 py-2 text-left">Author</th>
+              <th class="px-4 py-2 text-left">Published</th>
+              <th class="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let blog of dashboard.blogs">
+              <td class="px-4 py-2">{{ blog.id }}</td>
+              <td class="px-4 py-2">{{ blog.title }}</td>
+              <td class="px-4 py-2">{{ blog.author?.username || '-' }}</td>
+              <td class="px-4 py-2">{{ blog.publishDate | date:'short' }}</td>
+              <td class="px-4 py-2 space-x-2">
+                <button class="btn-secondary" (click)="viewBlog(blog)">View</button>
+                <button class="btn-danger" (click)="deleteBlog(blog)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMMENTS -->
+    <div class="bg-card-background rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Comments</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 text-left">ID</th>
+              <th class="px-4 py-2 text-left">Text</th>
+              <th class="px-4 py-2 text-left">User</th>
+              <th class="px-4 py-2 text-left">Created</th>
+              <th class="px-4 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let comment of dashboard.comments">
+              <td class="px-4 py-2">{{ comment.id }}</td>
+              <td class="px-4 py-2 truncate max-w-xs" title="{{ comment.commentText }}">{{ comment.commentText }}</td>
+              <td class="px-4 py-2">{{ comment.user?.username || '-' }}</td>
+              <td class="px-4 py-2">{{ comment.createdAt | date:'short' }}</td>
+              <td class="px-4 py-2 space-x-2">
+                <button class="btn-danger" (click)="deleteComment(comment)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
