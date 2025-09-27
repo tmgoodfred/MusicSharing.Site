@@ -11,6 +11,7 @@ import { PlayerComponent } from './layout/player/player.component';
 import { HomeComponent } from './features/home/home.component';
 import { GlobalErrorHandler } from './core/error-handlers/global-error-handler';
 import { AuthInterceptor } from './core/interceptors/auth.interceptor';
+import { AdminComponent } from './features/admin/admin.component';
 
 @NgModule({
   declarations: [AppComponent],
@@ -23,7 +24,8 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
     ReactiveFormsModule,
     HeaderComponent,
     PlayerComponent,
-    HomeComponent
+    HomeComponent,
+    AdminComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },

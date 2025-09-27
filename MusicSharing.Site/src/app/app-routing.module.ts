@@ -6,6 +6,7 @@ import { RegisterComponent } from './features/register/register.component';
 import { VerifyEmailComponent } from './features/register/verify-email/verify-email.component';
 import { ResetPasswordComponent } from './features/register/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './features/register/forgot-password/forgot-password.component';
+import { AdminComponent } from './features/admin/admin.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -43,6 +44,7 @@ const routes: Routes = [
   { path: 'auth/verify-email', component: VerifyEmailComponent },
   { path: 'auth/reset-password', component: ResetPasswordComponent },
   { path: 'auth/forgot-password', component: ForgotPasswordComponent },
+  { path: 'admin', component: AdminComponent },
   { path: '**', redirectTo: '' }
 ];
 
