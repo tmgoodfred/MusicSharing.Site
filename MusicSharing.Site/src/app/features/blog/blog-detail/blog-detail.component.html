@@ -67,12 +67,13 @@
         <textarea formControlName="commentText"
                   placeholder="{{currentUser ? 'Write a comment...' : 'Write a comment as Anonymous...'}}"
                   class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  [ngClass]="{'border-red-500': commentForm.get('commentText')?.invalid && commentForm.get('commentText')?.touched}"
+                  [ngClass]="{'border-red-500': commentForm.get('commentText')?.invalid && commentForm.get('commentText')?.touched || commentError}"
                   rows="3"></textarea>
         <div *ngIf="commentForm.get('commentText')?.invalid && commentForm.get('commentText')?.touched" class="text-red-500 mt-1">
           <span *ngIf="commentForm.get('commentText')?.errors?.['required']">Comment cannot be empty</span>
           <span *ngIf="commentForm.get('commentText')?.errors?.['minlength']">Comment must be at least 2 characters</span>
         </div>
+        <div *ngIf="commentError" class="text-red-500 mt-1">{{ commentError }}</div>
 
         <div class="flex justify-end mt-3">
           <div class="text-gray-500 mr-auto text-sm">

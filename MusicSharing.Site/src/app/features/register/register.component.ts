@@ -115,7 +115,11 @@ export class RegisterComponent {
       },
       error: (error) => {
         this.isSubmitting = false;
-        this.errorMessage = error?.error?.error || 'Registration failed. Please try again.';
+        if (error?.status === 409 && error?.error?.message) {
+          this.errorMessage = error.error.message;
+        } else {
+          this.errorMessage = error?.error?.error || 'Registration failed. Please try again.';
+        }
       }
     });
   }
