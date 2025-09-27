@@ -12,6 +12,7 @@ export class AdminGuard implements CanActivate {
   canActivate(): Observable<boolean> {
     return this.auth.currentUser$.pipe(
       map(user => {
+        console.log('AdminGuard user:', user);
         const role = user?.role as unknown;
         const isAdmin =
           typeof role === 'string'

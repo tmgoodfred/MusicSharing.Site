@@ -7,6 +7,7 @@ import { VerifyEmailComponent } from './features/register/verify-email/verify-em
 import { ResetPasswordComponent } from './features/register/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './features/register/forgot-password/forgot-password.component';
 import { AdminComponent } from './features/admin/admin.component';
+import { AdminGuard } from './core/guards/admin.guard';
 
 const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -44,7 +45,7 @@ const routes: Routes = [
   { path: 'auth/verify-email', component: VerifyEmailComponent },
   { path: 'auth/reset-password', component: ResetPasswordComponent },
   { path: 'auth/forgot-password', component: ForgotPasswordComponent },
-  { path: 'admin', component: AdminComponent },
+  { path: 'admin', component: AdminComponent, canActivate: [AdminGuard] },
   { path: '**', redirectTo: '' }
 ];
 
