@@ -25,7 +25,14 @@ export class AdminComponent implements OnInit {
     this.loading = true;
     this.adminService.getDashboard().subscribe({
       next: (data) => {
-        this.dashboard = data;
+        // Unwrap $values arrays for template compatibility
+        this.dashboard = {
+          users: data.users?.$values ?? [],
+          songs: data.songs?.$values ?? [],
+          comments: data.comments?.$values ?? [],
+          blogs: data.blogPosts?.$values ?? [],
+          activities: data.activities?.$values ?? []
+        };
         this.loading = false;
       },
       error: (err) => {
