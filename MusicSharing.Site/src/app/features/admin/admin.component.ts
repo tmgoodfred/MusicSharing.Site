@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../../core/services/admin.service';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-admin',
+  imports: [CommonModule],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.css']
 })
