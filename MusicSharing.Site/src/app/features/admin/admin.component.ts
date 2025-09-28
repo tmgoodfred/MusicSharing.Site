@@ -34,7 +34,6 @@ export class AdminComponent implements OnInit {
     this.loading = true;
     this.adminService.getDashboard().subscribe({
       next: (data) => {
-        // Unwrap $values arrays for template compatibility
         const dashboard = {
           users: data.users?.$values ?? [],
           songs: data.songs?.$values ?? [],
@@ -42,6 +41,15 @@ export class AdminComponent implements OnInit {
           blogs: data.blogPosts?.$values ?? [],
           activities: data.activities?.$values ?? []
         };
+
+        // Map username for comments
+        dashboard.comments.forEach((comment: any) => {
+          if (!comment.isAnonymous) {
+            comment.user = { username: comment.username };
+          } else {
+            comment.user = null;
+          }
+        });
 
         // Collect all unique user IDs from songs and blogs
         const songUserIds = dashboard.songs
@@ -59,7 +67,6 @@ export class AdminComponent implements OnInit {
           return;
         }
 
-        // Fetch all users in parallel
         forkJoin(
           allUserIds.map(id =>
             this.userService.getUserById(id).pipe(
@@ -72,14 +79,12 @@ export class AdminComponent implements OnInit {
             if (user) userMap.set(user.id, user);
           });
 
-          // Attach uploaderUsername to each song
           dashboard.songs.forEach((song: any) => {
             const uploader = userMap.get(song.userId);
             song.uploaderUsername = uploader ? uploader.username : '-';
             song.user = uploader;
           });
 
-          // Attach authorUsername to each blog
           dashboard.blogs.forEach((blog: any) => {
             const author = userMap.get(blog.authorId);
             blog.author = author;
