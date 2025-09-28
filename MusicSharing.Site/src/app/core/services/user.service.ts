@@ -117,9 +117,12 @@ export class UserService {
     return this.http.get<Analytics>(`${this.userApiUrl}/${userId}/analytics`);
   }
 
-  // Add this new method to fetch all activities including anonymous ones
-  getAllActivities(): Observable<Activity[]> {
-    return this.http.get<any>(`${this.activityApiUrl}`).pipe(
+  getAllActivities(count?: number): Observable<Activity[]> {
+    let url = `${this.activityApiUrl}/all`;
+    if (count !== undefined) {
+      url += `?count=${count}`;
+    }
+    return this.http.get<any>(url).pipe(
       map(res => this.unwrapArray<Activity>(res))
     );
   }
@@ -141,4 +144,5 @@ export class UserService {
   resetPassword(token: string, newPassword: string): Observable<void> {
     return this.http.post<void>(`${this.userApiUrl}/reset-password`, { token, newPassword });
   }
+
 }
