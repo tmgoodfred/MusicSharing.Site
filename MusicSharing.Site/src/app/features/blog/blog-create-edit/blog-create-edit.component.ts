@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { BlogService } from '../../../core/services/blog.service';
+import { UserService } from '../../../core/services/user.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -21,7 +22,8 @@ export class BlogCreateEditComponent implements OnInit {
     private fb: FormBuilder,
     private blogService: BlogService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private userService: UserService
   ) {
     this.blogForm = this.fb.group({
       title: ['', [Validators.required, Validators.maxLength(200)]],
@@ -75,7 +77,10 @@ export class BlogCreateEditComponent implements OnInit {
         }
       });
     } else {
-      this.blogService.createPost(blogData).subscribe({
+      // Add authorId from UserService
+      const authorId = this.userService['getCurrentUserId']();
+      const payload = { ...blogData, authorId };
+      this.blogService.createPost(payload).subscribe({
         next: (post) => {
           this.router.navigate(['/blog', post.id]);
         },
