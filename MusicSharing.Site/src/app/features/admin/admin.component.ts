@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../../core/services/admin.service';
+import { UserService } from '../../core/services/user.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 
 @Component({
   selector: 'app-admin',
@@ -15,7 +19,12 @@ export class AdminComponent implements OnInit {
   error = '';
   actionMessage = '';
 
-  constructor(private adminService: AdminService, private router: Router) {}
+  constructor(
+    private adminService: AdminService,
+    private router: Router,
+    private userService: UserService,
+
+  ) { }
 
   ngOnInit(): void {
     this.fetchDashboard();
@@ -26,14 +35,59 @@ export class AdminComponent implements OnInit {
     this.adminService.getDashboard().subscribe({
       next: (data) => {
         // Unwrap $values arrays for template compatibility
-        this.dashboard = {
+        const dashboard = {
           users: data.users?.$values ?? [],
           songs: data.songs?.$values ?? [],
           comments: data.comments?.$values ?? [],
           blogs: data.blogPosts?.$values ?? [],
           activities: data.activities?.$values ?? []
         };
-        this.loading = false;
+
+        // Collect all unique user IDs from songs and blogs
+        const songUserIds = dashboard.songs
+          .map((song: any) => song.userId)
+          .filter((id: any): id is number => typeof id === 'number');
+        const blogAuthorIds = dashboard.blogs
+          .map((blog: any) => blog.authorId)
+          .filter((id: any): id is number => typeof id === 'number');
+
+        const allUserIds = Array.from(new Set([...songUserIds, ...blogAuthorIds]));
+
+        if (allUserIds.length === 0) {
+          this.dashboard = dashboard;
+          this.loading = false;
+          return;
+        }
+
+        // Fetch all users in parallel
+        forkJoin(
+          allUserIds.map(id =>
+            this.userService.getUserById(id).pipe(
+              catchError(() => of(null))
+            )
+          )
+        ).subscribe(users => {
+          const userMap = new Map<number, any>();
+          users.forEach(user => {
+            if (user) userMap.set(user.id, user);
+          });
+
+          // Attach uploaderUsername to each song
+          dashboard.songs.forEach((song: any) => {
+            const uploader = userMap.get(song.userId);
+            song.uploaderUsername = uploader ? uploader.username : '-';
+            song.user = uploader;
+          });
+
+          // Attach authorUsername to each blog
+          dashboard.blogs.forEach((blog: any) => {
+            const author = userMap.get(blog.authorId);
+            blog.author = author;
+          });
+
+          this.dashboard = dashboard;
+          this.loading = false;
+        });
       },
       error: (err) => {
         this.error = 'Failed to load admin dashboard.';
