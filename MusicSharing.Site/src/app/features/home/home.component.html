@@ -1,8 +1,8 @@
 <div>
   <h1 class="text-2xl font-bold mb-6">Activity Feed</h1>
 
-  <!-- Toggle Button -->
-  <div class="mb-4 flex justify-end">
+  <!-- Toggle Button: Only show if user is signed in and is following anyone -->
+  <div class="mb-4 flex justify-end" *ngIf="currentUser && isFollowingAnyone">
     <button class="px-4 py-2 rounded bg-primary text-white hover:bg-primary-dark transition"
             (click)="toggleActivityFeed()">
       {{ showAllActivities ? 'Show Following Activities' : 'Show All Activities' }}

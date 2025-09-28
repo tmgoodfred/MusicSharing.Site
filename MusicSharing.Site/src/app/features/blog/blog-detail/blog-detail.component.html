@@ -103,13 +103,36 @@
       <div *ngFor="let comment of comments" class="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
         <div class="flex items-start">
           <div class="flex-shrink-0">
-            <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
-              {{ getCommentAuthor(comment).charAt(0) }}
-            </div>
+            <!-- Avatar links to profile if not anonymous -->
+            <ng-container *ngIf="!comment.isAnonymous && comment.user; else anonymousOrNoLink">
+              <a [routerLink]="['/profile', comment.user.id]" class="block">
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+                  <img *ngIf="comment.user.profilePicturePath"
+                       [src]="getUserProfilePicture(comment)"
+                       [alt]="getCommentAuthor(comment)"
+                       class="w-full h-full object-cover">
+                  <span *ngIf="!comment.user.profilePicturePath">{{ getUserInitial(comment.user.username) }}</span>
+                </div>
+              </a>
+            </ng-container>
+            <ng-template #anonymousOrNoLink>
+              <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white overflow-hidden">
+                <span>{{ getCommentAuthor(comment).charAt(0) }}</span>
+              </div>
+            </ng-template>
           </div>
           <div class="ml-3 flex-1">
             <div class="flex items-center">
-              <span class="font-medium">{{ getCommentAuthor(comment) }}</span>
+              <!-- Name links to profile if not anonymous -->
+              <ng-container *ngIf="!comment.isAnonymous && comment.user; else anonymousOrUnknownUser">
+                <a [routerLink]="['/profile', comment.user.id]" class="font-medium hover:text-primary">
+                  {{ getCommentAuthor(comment) }}
+                </a>
+              </ng-container>
+              <ng-template #anonymousOrUnknownUser>
+                <span class="font-medium">{{ getCommentAuthor(comment) }}</span>
+              </ng-template>
+
               <span class="ml-2 text-xs text-gray-500">{{ formatDate(comment.createdAt) }}</span>
               <button *ngIf="canDeleteComment(comment)"
                       (click)="deleteComment(comment)"

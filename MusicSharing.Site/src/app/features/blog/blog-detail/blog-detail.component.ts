@@ -6,6 +6,7 @@ import { BlogPost, User, UserRole, Comment as AppComment } from '../../../core/m
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ImageService } from '../../../core/services/image.service';
 
 
 @Component({
@@ -35,6 +36,7 @@ export class BlogDetailComponent implements OnInit {
     private blogService: BlogService,
     private authService: AuthService,
     private http: HttpClient,
+    private imageService: ImageService,
     private fb: FormBuilder
   ) {
     this.commentForm = this.fb.group({
@@ -167,6 +169,17 @@ export class BlogDetailComponent implements OnInit {
         alert('Failed to delete comment. You may not have permission.');
       }
     });
+  }
+
+  getUserProfilePicture(comment: AppComment): string {
+    if (comment.isAnonymous || !comment.user || !comment.user.id) {
+      return '';
+    }
+    return this.imageService.getProfileImageUrl(comment.user.id);
+  }
+
+  getUserInitial(username?: string): string {
+    return username ? username.charAt(0).toUpperCase() : '?';
   }
 
   canEditOrDeletePost(): boolean {

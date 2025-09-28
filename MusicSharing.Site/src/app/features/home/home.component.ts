@@ -18,6 +18,7 @@ export class HomeComponent implements OnInit {
   activities: Activity[] = [];
   currentUser: User | null = null;
   showAllActivities = false;
+  isFollowingAnyone = false;
 
   commentTexts: Record<number, string> = {};
   private userById: Record<number, User> = {};
@@ -31,6 +32,13 @@ export class HomeComponent implements OnInit {
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
+      if (user) {
+        this.userService.getUserFollowing(user.id).subscribe(following => {
+          this.isFollowingAnyone = following && following.length > 0;
+        });
+      } else {
+        this.isFollowingAnyone = false;
+      }
       this.loadActivityFeed();
     });
   }
@@ -45,11 +53,17 @@ export class HomeComponent implements OnInit {
   }
 
   formatActivityType(activity: Activity): string {
+    if (activity.type === 'Comment') {
+      const parsed = this.parseCommentActivityData(activity.data);
+      if (parsed?.kind === 'blog') {
+        return 'commented on a blog post';
+      }
+      // Default to song if not blog
+      return 'commented on a song';
+    }
     switch (activity.type) {
       case 'Upload':
         return 'uploaded a new song';
-      case 'Comment':
-        return 'commented on a song';
       case 'Rating':
         return 'rated a song';
       default:
@@ -83,7 +97,10 @@ export class HomeComponent implements OnInit {
     } else {
       this.userService.getActivityFeed(userId).subscribe({
         next: (activities) => {
-          this.activities = activities;
+          // Filter out anonymous comments
+          this.activities = activities.filter(a =>
+            !(a.type === 'Comment' && this.isAnonymousComment(a))
+          );
           this.hydrateActivityUsers(this.activities);
           this.hydrateCommentTexts(this.activities);
         },
