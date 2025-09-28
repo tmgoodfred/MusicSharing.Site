@@ -2886,6 +2886,12 @@ export class BlogDetailComponent implements OnInit {
     });
   }
 
+  canEditOrDeletePost(): boolean {
+    if (!this.currentUser || !this.blogPost) return false;
+    const isAuthor = this.blogPost.authorId === this.currentUser.id || this.blogPost.author?.id === this.currentUser.id;
+    return this.isAdmin || isAuthor;
+  }
+
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
