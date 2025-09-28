@@ -17,10 +17,9 @@ import { forkJoin } from 'rxjs';
 export class HomeComponent implements OnInit {
   activities: Activity[] = [];
   currentUser: User | null = null;
+  showAllActivities = false;
 
-  // Map of activityId -> resolved comment text
   commentTexts: Record<number, string> = {};
-  // Cache users by id to avoid duplicate requests
   private userById: Record<number, User> = {};
 
   constructor(
@@ -63,33 +62,36 @@ export class HomeComponent implements OnInit {
     return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
   }
 
+  toggleActivityFeed(): void {
+    this.showAllActivities = !this.showAllActivities;
+    this.loadActivityFeed();
+  }
+
   loadActivityFeed(): void {
     const userId = this.currentUser ? this.currentUser.id : 5;
-    this.userService.getActivityFeed(userId).subscribe({
-      next: (activities) => {
-        this.activities = activities;
-
-        // If feed is empty, fetch all activities including anonymous ones
-        if (this.activities.length === 0) {
-          this.userService.getAllActivities().subscribe({
-            next: (allActivities) => {
-              this.activities = allActivities;
-              this.hydrateActivityUsers(this.activities);
-              this.hydrateCommentTexts(this.activities);
-            }
-          });
-        } else {
-          // Hydrate authors (user) for each activity
+    if (this.showAllActivities) {
+      this.userService.getAllActivities().subscribe({
+        next: (allActivities) => {
+          this.activities = allActivities;
           this.hydrateActivityUsers(this.activities);
-
-          // Hydrate comment texts (for Comment activities)
           this.hydrateCommentTexts(this.activities);
+        },
+        error: () => {
+          this.activities = [];
         }
-      },
-      error: () => {
-        this.activities = [];
-      }
-    });
+      });
+    } else {
+      this.userService.getActivityFeed(userId).subscribe({
+        next: (activities) => {
+          this.activities = activities;
+          this.hydrateActivityUsers(this.activities);
+          this.hydrateCommentTexts(this.activities);
+        },
+        error: () => {
+          this.activities = [];
+        }
+      });
+    }
   }
 
   // Attach user objects to activities based on userId
