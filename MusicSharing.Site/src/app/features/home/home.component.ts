@@ -224,7 +224,7 @@ export class HomeComponent implements OnInit {
 
     const toNum = (v: any) => (v === undefined || v === null || v === '') ? undefined : Number(v);
     const songId = toNum(obj?.songId ?? obj?.SongId ?? obj?.targetId ?? obj?.TargetId);
-    const blogPostId = toNum(obj?.blogPostId ?? obj?.BlogPostId);
+    const blogPostId = toNum(obj?.blogPostId ?? obj?.BlogPostId ?? obj?.postId ?? obj?.PostId ?? obj?.id ?? obj?.Id);
     const typeFromObj = (obj?.type ?? obj?.Type)?.toString().toLowerCase();
 
     if ((activity.type === 'Upload' || activity.type === 'Rating') && songId) {
@@ -239,6 +239,11 @@ export class HomeComponent implements OnInit {
       if (parsed?.kind === 'blog' && parsed.blogPostId) {
         return { link: ['/blog', parsed.blogPostId], title, kind: 'blog' };
       }
+    }
+
+    // Add support for direct blog post activity (e.g., 'BlogPost', 'Post', 'Blog')
+    if ((activity.type?.toLowerCase?.() === 'blogpost' || activity.type?.toLowerCase?.() === 'post' || activity.type?.toLowerCase?.() === 'blog') && blogPostId) {
+      return { link: ['/blog', blogPostId], title, kind: 'blog' };
     }
 
     if (typeFromObj === 'song' && songId) return { link: ['/songs', songId], title, kind: 'song' };
