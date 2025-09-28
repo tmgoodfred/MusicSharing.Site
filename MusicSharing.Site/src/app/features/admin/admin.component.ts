@@ -102,4 +102,10 @@ export class AdminComponent implements OnInit {
       error: () => { this.actionMessage = 'Failed to promote user.'; }
     });
   }
+
+  // Helper to display user or 'Anonymous' for comments
+  getCommentUserDisplay(comment: any): string {
+    if (comment.isAnonymous) return 'Anonymous';
+    return comment.user?.username || '-';
+  }
 }
