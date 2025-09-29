@@ -1,14 +1,15 @@
-/* Queue drop-up panel */
+/* Queue drop-up panel (desktop) */
 .queue-panel {
   width: 360px;
   max-width: 90vw;
-  max-height: 50vh; /* don't go past half of the screen */
+  max-height: 50vh;
   background: var(--card-background, #fff);
   color: inherit;
   border-radius: 0.5rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
   border: 1px solid rgba(0,0,0,0.05);
+  z-index: 100;
 }
 
 .queue-header {
@@ -40,7 +41,7 @@
   align-items: center;
   justify-content: center;
   cursor: grab;
-  color: #6b7280; /* gray-500 */
+  color: #6b7280;
 }
 
 .artwork {
@@ -51,7 +52,7 @@
 }
 
   .artwork.placeholder {
-    background: #e5e7eb; /* gray-200 */
+    background: #e5e7eb;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -68,7 +69,7 @@
 }
 
   .info .title {
-    font-size: 0.875rem; /* text-sm */
+    font-size: 0.875rem;
     line-height: 1.25rem;
     white-space: nowrap;
     overflow: hidden;
@@ -77,7 +78,7 @@
 
   .info .sub {
     font-size: 0.75rem;
-    color: #6b7280; /* text-xs, gray-500 */
+    color: #6b7280;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -87,6 +88,8 @@
   font-size: 0.75rem;
   color: #6b7280;
   margin-left: 0.25rem;
+  min-width: 40px;
+  text-align: right;
 }
 
 .remove {
@@ -97,26 +100,44 @@
   height: 24px;
   border: none;
   background: transparent;
-  color: #9ca3af; /* gray-400 */
+  color: #9ca3af;
   border-radius: 0.25rem;
   cursor: pointer;
 }
 
   .remove:hover {
-    color: #ef4444; /* red-500 */
+    color: #ef4444;
     background: rgba(239,68,68,0.08);
   }
 
-/* New: Disabled button styling */
 .disabled-button {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
+/* Mobile queue panel */
+.queue-panel-mobile {
+  width: 98vw;
+  max-width: 98vw;
+  max-height: 60vh;
+  background: var(--card-background, #fff);
+  color: inherit;
+  border-radius: 0.5rem 0.5rem 0 0;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.05);
+  left: 1vw;
+  right: 1vw;
+  bottom: 60px;
+  position: fixed;
+  z-index: 100;
+}
+
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
-  .queue-panel {
-    background: #1f2937; /* gray-800 */
+  .queue-panel,
+  .queue-panel-mobile {
+    background: #1f2937;
     border-color: rgba(255,255,255,0.06);
   }
 
@@ -131,7 +152,7 @@
   .artwork.placeholder {
     background: #374151;
   }
-  /* gray-700 */
+
   .info .sub, .duration {
     color: #9ca3af;
   }
@@ -143,6 +164,15 @@
 
 @media (max-width: 640px) {
   .queue-panel,
+  .hidden.sm\:block,
+  .hidden.sm\:flex {
+    display: none !important;
+  }
+
+  .queue-panel-mobile {
+    display: block !important;
+  }
+
   .queue-header,
   .queue-list,
   .queue-item,
@@ -154,26 +184,15 @@
   .drag-handle {
     font-size: 0.85rem;
   }
-  .queue-panel {
-    width: 98vw;
-    max-width: 98vw;
-  }
+
   .info .sub {
     display: none !important;
   }
-  /* Remove .w-1/4, .w-2/4 selectors */
-  .hidden.sm\:block {
-    display: none !important;
-  }
-  .hidden.sm\:flex {
-    display: none !important;
-  }
+
   .mt-2.md\:mt-0 {
     margin-top: 0 !important;
   }
-}
 
-@media (max-width: 640px) {
   .volume-slider {
     display: none !important;
   }

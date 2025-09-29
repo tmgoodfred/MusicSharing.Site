@@ -46,14 +46,6 @@
                 <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798L4.555 5.168z" />
               </svg>
             </button>
-            <!-- Queue button always visible -->
-            <button class="focus:outline-none p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
-                    (click)="toggleQueue()"
-                    aria-label="Toggle queue">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 6h14a1 1 0 100-2H3a1 1 0 100 2zm0 5h10a1 1 0 100-2H3a1 1 0 100 2zm0 5h6a1 1 0 100-2H3a1 1 0 100 2z" />
-              </svg>
-            </button>
           </div>
           <div class="w-full flex items-center space-x-2">
             <span class="text-xs">{{ formatTime(state.currentTime) }}</span>
@@ -65,9 +57,19 @@
                    class="w-full h-1 rounded-lg appearance-none cursor-pointer">
             <span class="text-xs">{{ formatTime(state.duration) }}</span>
           </div>
+          <!-- Queue button for mobile, below controls -->
+          <div class="flex justify-end w-full mt-2 sm:hidden">
+            <button class="focus:outline-none p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                    (click)="toggleQueue()"
+                    aria-label="Toggle queue">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 6h14a1 1 0 100-2H3a1 1 0 100 2zm0 5h10a1 1 0 100-2H3a1 1 0 100 2zm0 5h6a1 1 0 100-2H3a1 1 0 100 2z" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <!-- Volume: Hide on mobile, show on desktop -->
+        <!-- Volume and queue button for desktop -->
         <div class="w-full md:w-1/4 flex justify-end items-center relative mt-2 md:mt-0 hidden sm:flex">
           <div class="flex items-center space-x-3">
             <div class="flex items-center space-x-2 volume-slider">
@@ -81,8 +83,16 @@
                      (input)="setVolume($event)"
                      class="w-20 h-1 rounded-lg appearance-none cursor-pointer">
             </div>
+            <!-- Queue button for desktop -->
+            <button class="focus:outline-none p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                    (click)="toggleQueue()"
+                    aria-label="Toggle queue">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 6h14a1 1 0 100-2H3a1 1 0 100 2zm0 5h10a1 1 0 100-2H3a1 1 0 100 2zm0 5h6a1 1 0 100-2H3a1 1 0 100 2z" />
+              </svg>
+            </button>
           </div>
-          <!-- Drop-up queue panel -->
+          <!-- Drop-up queue panel for desktop -->
           <div *ngIf="queueOpen" class="queue-panel absolute right-0 bottom-full mb-2">
             <div class="queue-header">
               <span>Queue ({{ state.queue.length }})</span>
@@ -112,7 +122,7 @@
                 </button>
                 <div class="duration">
                   <span>
-                    {{ song.id === state.currentSong.id ? formatTime(state.duration) : song.duration ? formatTime(song.duration) : '--:--' }}
+                    {{ song.id === state.currentSong?.id ? formatTime(state.duration) : song.duration ? formatTime(song.duration) : '--:--' }}
                   </span>
                 </div>
                 <button class="remove" (click)="removeFromQueue(i)" title="Remove from queue">
@@ -122,6 +132,47 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+      <!-- Mobile queue panel -->
+      <div *ngIf="queueOpen" class="queue-panel-mobile fixed left-0 right-0 bottom-16 z-50 sm:hidden">
+        <div class="queue-header">
+          <span>Queue ({{ state.queue.length }})</span>
+        </div>
+        <div cdkDropList [cdkDropListData]="state.queue" (cdkDropListDropped)="drop($event)"
+             class="queue-list">
+          <div *ngFor="let song of state.queue; let i = index"
+               cdkDrag
+               class="queue-item">
+            <div class="drag-handle" cdkDragHandle title="Drag to reorder">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M7 4h2v2H7V4zm4 0h2v2h-2V4zM7 8h2v2H7V8zm4 0h2v2h-2V8zM7 12h2v2H7v-2zm4 0h2v2h-2v-2z" />
+              </svg>
+            </div>
+            <img *ngIf="song.artworkPath"
+                 [src]="getArtworkUrl(song.id)"
+                 alt="Art"
+                 class="artwork">
+            <div *ngIf="!song.artworkPath" class="artwork placeholder">
+              <svg class="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <button class="info" (click)="playFromQueue(i)" title="Play this song">
+              <div class="title">{{ song.title }}</div>
+              <div class="sub">{{ song.artist }}</div>
+            </button>
+            <div class="duration">
+              <span>
+                {{ song.id === state.currentSong?.id ? formatTime(state.duration) : song.duration ? formatTime(song.duration) : '--:--' }}
+              </span>
+            </div>
+            <button class="remove" (click)="removeFromQueue(i)" title="Remove from queue">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M6 6l8 8M6 14L14 6" clip-rule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
