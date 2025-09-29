@@ -74,6 +74,11 @@
               <a routerLink="/profile" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" (click)="closeDropdown()">Profile</a>
               <a routerLink="/analytics" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" (click)="closeDropdown()">Analytics</a>
               <a *ngIf="user.role === 'Admin'" routerLink="/admin" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" (click)="closeDropdown()">Admin</a>
+              <button (click)="logout()"
+                      class="dropdown-btn logout block w-full px-4 py-2 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+                      type="button">
+                Logout
+              </button>
             </div>
           </div>
         </div>
