@@ -158,10 +158,6 @@
     width: 98vw;
     max-width: 98vw;
   }
-  .artwork,
-  .artwork.placeholder {
-    display: none !important;
-  }
   .info .sub {
     display: none !important;
   }
