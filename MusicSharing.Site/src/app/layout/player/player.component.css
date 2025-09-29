@@ -140,3 +140,39 @@
     color: #9ca3af;
   }
 }
+
+@media (max-width: 640px) {
+  .queue-panel,
+  .queue-header,
+  .queue-list,
+  .queue-item,
+  .artwork,
+  .artwork.placeholder,
+  .info .sub,
+  .duration,
+  .remove,
+  .drag-handle {
+    font-size: 0.85rem;
+  }
+  .queue-panel {
+    width: 98vw;
+    max-width: 98vw;
+  }
+  .artwork,
+  .artwork.placeholder {
+    display: none !important;
+  }
+  .info .sub {
+    display: none !important;
+  }
+  /* Remove .w-1/4, .w-2/4 selectors */
+  .hidden.sm\:block {
+    display: none !important;
+  }
+  .hidden.sm\:flex {
+    display: none !important;
+  }
+  .mt-2.md\:mt-0 {
+    margin-top: 0 !important;
+  }
+}

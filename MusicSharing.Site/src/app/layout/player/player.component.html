@@ -1,10 +1,10 @@
-<footer class="fixed bottom-0 left-0 right-0 bg-card-background shadow-lg py-2 px-4 z-50">
+<footer class="fixed bottom-0 left-0 right-0 bg-card-background shadow-lg py-2 px-2 md:px-4 z-50">
   <div class="container mx-auto">
     <ng-container *ngIf="(playerState$ | async) as state">
-      <div *ngIf="state.currentSong" class="flex items-center">
-        <!-- Song info -->
-        <div class="flex items-center w-1/4">
-          <div class="w-12 h-12 mr-3">
+      <div *ngIf="state.currentSong" class="flex flex-col md:flex-row items-center">
+        <!-- Song info: Hide artwork and artist on mobile -->
+        <div class="flex items-center w-full md:w-1/4 mb-2 md:mb-0">
+          <div class="w-10 h-10 mr-2 hidden sm:block">
             <img *ngIf="state.currentSong.artworkPath"
                  [src]="getArtworkUrl(state.currentSong.id)"
                  alt="Album art"
@@ -17,20 +17,19 @@
             </div>
           </div>
           <div class="truncate">
-            <div class="font-medium truncate">{{ state.currentSong.title }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 truncate">{{ state.currentSong.artist }}</div>
+            <div class="font-medium truncate text-sm md:text-base">{{ state.currentSong.title }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">{{ state.currentSong.artist }}</div>
           </div>
         </div>
 
-        <!-- Playback controls -->
-        <div class="w-2/4 flex flex-col items-center">
-          <div class="flex items-center space-x-4 mb-1">
+        <!-- Playback controls: Stack vertically on mobile -->
+        <div class="w-full md:w-2/4 flex flex-col items-center">
+          <div class="flex items-center justify-center space-x-4 mb-1">
             <button class="focus:outline-none" (click)="playPrevious()">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M8.445 14.832A1 1 0 0010 14v-2.798l5.445 3.63A1 1 0 0017 14V6a1 1 0 00-1.555-.832L10 8.798V6a1 1 0 00-1.555-.832l-6 4a1 1 0 000 1.664l6 4z" />
               </svg>
             </button>
-
             <button class="focus:outline-none p-2 bg-primary rounded-full" (click)="togglePlay()">
               <svg *ngIf="!state.isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
@@ -39,7 +38,6 @@
                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
               </svg>
             </button>
-
             <button class="focus:outline-none"
                     [class.disabled-button]="!state.hasNextTrack"
                     [disabled]="!state.hasNextTrack"
@@ -49,8 +47,7 @@
               </svg>
             </button>
           </div>
-
-          <div class="w-full flex items-center space-x-3">
+          <div class="w-full flex items-center space-x-2">
             <span class="text-xs">{{ formatTime(state.currentTime) }}</span>
             <input type="range"
                    min="0"
@@ -62,8 +59,8 @@
           </div>
         </div>
 
-        <!-- Volume + Queue (right side) -->
-        <div class="w-1/4 flex justify-end items-center relative">
+        <!-- Volume + Queue: Hide on mobile -->
+        <div class="w-full md:w-1/4 flex justify-end items-center relative mt-2 md:mt-0 hidden sm:flex">
           <div class="flex items-center space-x-3">
             <div class="flex items-center space-x-2">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -76,8 +73,6 @@
                      (input)="setVolume($event)"
                      class="w-20 h-1 rounded-lg appearance-none cursor-pointer">
             </div>
-
-            <!-- Queue toggle button -->
             <button class="focus:outline-none p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
                     (click)="toggleQueue()"
                     aria-label="Toggle queue">
@@ -86,7 +81,6 @@
               </svg>
             </button>
           </div>
-
           <!-- Drop-up queue panel -->
           <div *ngIf="queueOpen" class="queue-panel absolute right-0 bottom-full mb-2">
             <div class="queue-header">
@@ -135,7 +129,6 @@
           </div>
         </div>
       </div>
-
       <div *ngIf="!state.currentSong" class="flex justify-center items-center py-2 text-gray-500">
         No song playing
       </div>
