@@ -44,6 +44,14 @@ export class HeaderComponent {
     this.checkMobile();
   }
 
+@HostListener('document:click', ['$event'])
+closeDropdownOnOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.relative')) {
+    this.isDropdownOpen = false;
+  }
+}
+
   checkMobile() {
     this.isMobile = window.innerHeight > window.innerWidth;
     if (!this.isMobile) {
