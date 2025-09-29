@@ -6,6 +6,7 @@ import { RegisterComponent } from './features/register/register.component';
 import { VerifyEmailComponent } from './features/register/verify-email/verify-email.component';
 import { ResetPasswordComponent } from './features/register/reset-password/reset-password.component';
 import { ForgotPasswordComponent } from './features/register/forgot-password/forgot-password.component';
+import { MusicRandomizerComponent } from './features/music-randomizer/music-randomizer.component';
 import { AdminComponent } from './features/admin/admin.component';
 import { AdminGuard } from './core/guards/admin.guard';
 
@@ -38,6 +39,10 @@ const routes: Routes = [
   {
     path: 'analytics',
     loadChildren: () => import('./features/analytics/analytics.module').then(m => m.AnalyticsModule)
+  },
+  {
+    path: 'music-randomizer',
+    loadChildren: () => import('./features/music-randomizer/music-randomizer.module').then(m => m.MusicRandomizerModule)
   },
   { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'auth/login', component: LoginComponent },

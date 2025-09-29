@@ -1,0 +1,30 @@
+<div class="music-randomizer">
+  <h2>Random Music Generator</h2>
+  
+  <div class="container centered-container">
+    <div class="form-group">
+      <label for="main-genre-dropdown">Select Genre:</label>
+      <select id="main-genre-dropdown" [(ngModel)]="selectedGenre" (change)="onGenreChange()">
+        <option value="">-- Select Genre --</option>
+        <option *ngFor="let genre of genreOptions" [value]="genre">{{ genre }}</option>
+      </select>
+    </div>
+  </div>
+  
+  <button (click)="randomize()" class="btn">Randomize</button>
+  <div class="info">
+    <p><strong>Genre:</strong> {{ selectedGenre }}</p>
+    <p><strong>Subgenre:</strong> {{ genre }}</p>
+    <p><strong>BPM:</strong> {{ bpm }}</p>
+    <p><strong>Key:</strong> {{ selectedKey }}</p>
+    <p><strong>Notes:</strong> {{ notesInKey.join(', ') }}</p>
+    <p><strong>Chord Progression:</strong> {{ chordProgression.join(' - ') }}</p>
+    <p><strong>Chords Display:</strong></p>
+    <pre>{{ chordsDisplay }}</pre>
+    <p><strong>Vibe:</strong> {{ vibe }}</p>
+  </div>
+  <button (click)="createMelody()" class="btn">Create Melody</button>
+    <div class="melody-container">
+      <pre>{{ melody }}</pre>
+    </div>
+</div>
