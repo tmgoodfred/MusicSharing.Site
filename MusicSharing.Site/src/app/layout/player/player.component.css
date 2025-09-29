@@ -176,3 +176,9 @@
     margin-top: 0 !important;
   }
 }
+
+@media (max-width: 640px) {
+  .volume-slider {
+    display: none !important;
+  }
+}
