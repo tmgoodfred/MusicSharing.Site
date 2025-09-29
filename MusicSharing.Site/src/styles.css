@@ -266,3 +266,24 @@ select:focus {
   border-left-style: solid;
   border-left-color: #ccc;
 }
+
+.header a.router-link-active,
+.header a.text-primary,
+.header nav a.active {
+  color: #fff !important;
+  font-weight: bold;
+  background: rgba(0,0,0,0.12);
+  border-radius: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+@media (prefers-color-scheme: dark) {
+  .header a.router-link-active,
+  .header a.text-primary,
+  .header nav a.active {
+    color: #fff !important;
+    background: rgba(255,255,255,0.12);
+  }
+}
